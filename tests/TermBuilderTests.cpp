@@ -156,23 +156,23 @@ TEST_F(TermBuilderTest, LongString)
 	EXPECT_NO_THROW(const auto a = termlib::parse::str(it); EXPECT_EQ(str, a));
 }
 
-// TEST_F(TermBuilderTest, EmptyString)
-// {
-// 	const std::string str{};
+TEST_F(TermBuilderTest, EmptyString)
+{
+	const std::string str{};
 
-// 	builder_.add_string(str);
+	builder_.add_string(str);
 
-// 	EXPECT_NO_THROW(const auto check = builder_.buffer());
-// 	const auto buffer = builder_.buffer();
-// 	const size_t size = builder_.index();
+	EXPECT_NO_THROW(const auto check = builder_.buffer());
+	const auto buffer = builder_.buffer();
+	const size_t size = builder_.index();
 
-// 	EXPECT_NE(buffer, nullptr);
-// 	EXPECT_GT(size, 0);
+	EXPECT_NE(buffer, nullptr);
+	EXPECT_GT(size, 0);
 
-// 	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
-// 	const auto it = parser.begin();
-// 	EXPECT_NO_THROW(const auto a = parser.str(it); EXPECT_EQ(str, a));
-// }
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
+	const auto it = parser.begin();
+	EXPECT_NO_THROW(const auto a = termlib::parse::str(it); EXPECT_EQ(str, a));
+}
 
 TEST_F(TermBuilderTest, Binary)
 {

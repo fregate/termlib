@@ -183,13 +183,16 @@ double real(const TermParser::Iterator & it)
 
 std::string str(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_STRING_EXT}))
+	if (!is(it->first, in{ERL_STRING_EXT, ERL_NIL_EXT}))
 		throw std::runtime_error(std::string("string type error: ") + std::to_string(it->first));
 
 	int type;
 	int size;
 	int idx{0};
 	ei_get_type(reinterpret_cast<const char *>(it->second.data()), &idx, &type, &size);
+
+	if (type == ERL_NIL_EXT)
+		return std::string{};
 
 	std::string res;
 	res.resize(size);

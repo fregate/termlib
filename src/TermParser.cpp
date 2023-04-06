@@ -231,7 +231,8 @@ long binary(const TermParser::Iterator & it, void * dest, size_t size)
 
 TermParser complex(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_LIST_EXT, ERL_SMALL_TUPLE_EXT, ERL_LARGE_TUPLE_EXT, ERL_MAP_EXT, ERL_NIL_EXT}))
+	if (!is(it->first,
+			in{ERL_LIST_EXT, ERL_STRING_EXT, ERL_SMALL_TUPLE_EXT, ERL_LARGE_TUPLE_EXT, ERL_MAP_EXT, ERL_NIL_EXT}))
 		throw std::runtime_error(std::string("complex type error: ") + std::to_string(it->first));
 
 	int idx{0};
@@ -240,6 +241,11 @@ TermParser complex(const TermParser::Iterator & it)
 		case ERL_LIST_EXT:
 			ei_decode_list_header(reinterpret_cast<const char *>(it->second.data()), &idx, &arity);
 			break;
+
+		// TODO
+		// case ERL_STRING_EXT:
+		// 	ei_decode_string();
+		// 	break;
 
 		case ERL_SMALL_TUPLE_EXT:
 		case ERL_LARGE_TUPLE_EXT:

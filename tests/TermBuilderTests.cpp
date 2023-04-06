@@ -418,25 +418,22 @@ TEST_F(TermBuilderTest, Compound)
 	const double val = -1.23;
 	const auto arity = 3;
 
-	EXPECT_NO_THROW(builder_.start_tuple(arity));
 	// outer tuple
+	EXPECT_NO_THROW(builder_.start_tuple(arity));
+	EXPECT_NO_THROW(builder_.add_double(val));
+
+	EXPECT_NO_THROW(builder_.start_list(arity));
 	{
 		EXPECT_NO_THROW(builder_.add_double(val));
-		EXPECT_NO_THROW(builder_.add_double(val));
-		EXPECT_NO_THROW(builder_.start_list(arity));
-		// list
+		EXPECT_NO_THROW(builder_.start_tuple(arity));
 		{
 			EXPECT_NO_THROW(builder_.add_double(val));
-			EXPECT_NO_THROW(builder_.start_tuple(arity));
-			// tuple
-			{
-				EXPECT_NO_THROW(builder_.add_double(val));
-				EXPECT_NO_THROW(builder_.add_double(val));
-				EXPECT_NO_THROW(builder_.add_double(val));
-			}
+			EXPECT_NO_THROW(builder_.add_double(val));
 			EXPECT_NO_THROW(builder_.add_double(val));
 		}
+		EXPECT_NO_THROW(builder_.add_double(val));
 	}
+	EXPECT_NO_THROW(builder_.add_double(val));
 
 	EXPECT_NO_THROW(const auto check = builder_.buffer());
 	const auto buffer = builder_.buffer();
@@ -451,9 +448,6 @@ TEST_F(TermBuilderTest, Compound)
 	auto outer_tuple = parser.complex(it);
 	{
 		auto outer_tuple_it = outer_tuple.begin();
-		EXPECT_NO_THROW(const auto a = outer_tuple.real(outer_tuple_it); EXPECT_EQ(val, a));
-
-		outer_tuple_it++;
 		EXPECT_NO_THROW(const auto a = outer_tuple.real(outer_tuple_it); EXPECT_EQ(val, a));
 
 		outer_tuple_it++;

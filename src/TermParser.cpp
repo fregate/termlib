@@ -71,23 +71,6 @@ TermParser::Iterator TermParser::Iterator::operator++(int)
 	return tmp;
 }
 
-bool TermParser::Iterator::operator==(const Iterator & rhs)
-{
-	if (index_ < 0 && rhs.index_ < 0)
-		return true;
-
-	// check empty list
-	if (value_.first == ERL_NIL_EXT && rhs.index_ < 0)
-		return true;
-
-	return index_ == rhs.index_ && view_.data() == view_.data() && view_.size() == view_.size();
-}
-
-bool TermParser::Iterator::operator!=(const Iterator & rhs)
-{
-	return !(operator==(rhs));
-}
-
 // TermParser
 
 TermParser::TermParser(BinaryBlock view)

@@ -30,8 +30,23 @@ public:
 		Iterator & operator++();
 		Iterator operator++(int);
 
-		bool operator==(const Iterator & rhs);
-		bool operator!=(const Iterator & rhs);
+		friend bool operator==(const termlib::TermParser::Iterator & lhs, const termlib::TermParser::Iterator & rhs)
+		{
+			if (lhs.index_ < 0 && rhs.index_ < 0)
+				return true;
+
+			// check empty list
+			if (lhs.value_.first == ERL_NIL_EXT && rhs.index_ < 0)
+				return true;
+
+			return lhs.index_ == rhs.index_ && lhs.view_.data() == rhs.view_.data()
+				&& lhs.view_.size() == rhs.view_.size();
+		}
+
+		friend bool operator!=(const termlib::TermParser::Iterator & lhs, const termlib::TermParser::Iterator & rhs)
+		{
+			return !(operator==(lhs, rhs));
+		}
 
 	private:
 		void fill_value();

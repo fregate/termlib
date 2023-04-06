@@ -1,8 +1,8 @@
 #pragma once
 
-#include <functional>
+#include <cstdint>
 #include <span>
-#include <unordered_map>
+#include <string>
 
 #include <ei.h>
 
@@ -12,7 +12,7 @@ namespace termlib
 class TermParser
 {
 public:
-	using BinaryBlock = std::span<const char>;
+	using BinaryBlock = std::span<const unsigned char>;
 
 	struct Iterator
 	{
@@ -50,22 +50,23 @@ public:
 	Iterator begin();
 	Iterator end();
 
-	std::string atom(const Iterator & it) const;
-	std::int32_t int32(const Iterator & it) const;
-	std::uint32_t uint32(const Iterator & it) const;
-	std::int64_t int64(const Iterator & it) const;
-	std::uint64_t uint64(const Iterator & it) const;
-	double real(const Iterator & it) const;
-	std::string str(const Iterator & it) const;
-	long binary(const Iterator & it, void * dest, size_t size) const;
-
-	TermParser complex(const Iterator & it) const;
-
 private:
-	// std::unordered_map<char, std::function<int()>>
 	BinaryBlock view_;
-
-	mutable std::array<char, MAXATOMLEN> atom_buffer{0};
 };
+
+namespace parse
+{
+
+std::string atom(const TermParser::Iterator & it);
+std::int32_t int32(const TermParser::Iterator & it);
+std::uint32_t uint32(const TermParser::Iterator & it);
+std::int64_t int64(const TermParser::Iterator & it);
+std::uint64_t uint64(const TermParser::Iterator & it);
+double real(const TermParser::Iterator & it);
+std::string str(const TermParser::Iterator & it);
+long binary(const TermParser::Iterator & it, void * dest, size_t size);
+TermParser complex(const TermParser::Iterator & it);
+
+}  // namespace parse
 
 }  // namespace termlib

@@ -35,7 +35,7 @@ void TermBuilder::add_atom(const std::string & atom)
 	if (atom.size() >= MAXATOMLEN)
 		throw std::invalid_argument("atom is too long");
 
-	ei_x_encode_atom_len(&buff_, atom.c_str(), atom.size());
+	ei_x_encode_atom_len_as(&buff_, atom.c_str(), atom.size(), ERLANG_LATIN1, ERLANG_UTF8);
 	update_arity();
 }
 

@@ -25,9 +25,9 @@ TEST_F(TermBuilderTest, Atom)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	EXPECT_NO_THROW(const auto a = parser.atom(it); EXPECT_EQ(atom, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::atom(it); EXPECT_EQ(atom, a));
 }
 
 TEST_F(TermBuilderTest, Int32)
@@ -43,9 +43,9 @@ TEST_F(TermBuilderTest, Int32)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	EXPECT_NO_THROW(const auto a = parser.int32(it); EXPECT_EQ(val, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::int32(it); EXPECT_EQ(val, a));
 }
 
 TEST_F(TermBuilderTest, UInt32)
@@ -61,9 +61,9 @@ TEST_F(TermBuilderTest, UInt32)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	EXPECT_NO_THROW(const auto a = parser.uint32(it); EXPECT_EQ(val, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::uint32(it); EXPECT_EQ(val, a));
 }
 
 TEST_F(TermBuilderTest, Int64)
@@ -79,9 +79,9 @@ TEST_F(TermBuilderTest, Int64)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	EXPECT_NO_THROW(const auto a = parser.int64(it); EXPECT_EQ(val, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::int64(it); EXPECT_EQ(val, a));
 }
 
 TEST_F(TermBuilderTest, UInt64)
@@ -97,9 +97,9 @@ TEST_F(TermBuilderTest, UInt64)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	EXPECT_NO_THROW(const auto a = parser.uint64(it); EXPECT_EQ(val, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::uint64(it); EXPECT_EQ(val, a));
 }
 
 TEST_F(TermBuilderTest, Double)
@@ -115,9 +115,9 @@ TEST_F(TermBuilderTest, Double)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	EXPECT_NO_THROW(const auto a = parser.real(it); EXPECT_EQ(val, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::real(it); EXPECT_EQ(val, a));
 }
 
 TEST_F(TermBuilderTest, ShortString)
@@ -133,9 +133,9 @@ TEST_F(TermBuilderTest, ShortString)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	EXPECT_NO_THROW(const auto a = parser.str(it); EXPECT_EQ(str, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::str(it); EXPECT_EQ(str, a));
 }
 
 TEST_F(TermBuilderTest, LongString)
@@ -151,9 +151,9 @@ TEST_F(TermBuilderTest, LongString)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	EXPECT_NO_THROW(const auto a = parser.str(it); EXPECT_EQ(str, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::str(it); EXPECT_EQ(str, a));
 }
 
 // TEST_F(TermBuilderTest, EmptyString)
@@ -169,7 +169,7 @@ TEST_F(TermBuilderTest, LongString)
 // 	EXPECT_NE(buffer, nullptr);
 // 	EXPECT_GT(size, 0);
 
-// 	TermParser parser({buffer, size});
+// 	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 // 	const auto it = parser.begin();
 // 	EXPECT_NO_THROW(const auto a = parser.str(it); EXPECT_EQ(str, a));
 // }
@@ -179,7 +179,7 @@ TEST_F(TermBuilderTest, Binary)
 	std::array<char, MAXATOMLEN * 3> data;
 	data.fill('=');
 
-	builder_.add_binary(&data.front(), data.size());
+	builder_.add_binary(data.data(), data.size());
 
 	EXPECT_NO_THROW(const auto check = builder_.buffer());
 	const auto buffer = builder_.buffer();
@@ -188,11 +188,11 @@ TEST_F(TermBuilderTest, Binary)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
 
 	std::array<char, MAXATOMLEN * 3> recv;
-	EXPECT_NO_THROW(const auto len = parser.binary(it, &recv.front(), recv.size()); EXPECT_EQ(len, data.size()));
+	EXPECT_NO_THROW(const auto len = termlib::parse::binary(it, recv.data(), recv.size()); EXPECT_EQ(len, data.size()));
 	EXPECT_EQ(recv, data);
 }
 
@@ -200,7 +200,7 @@ TEST_F(TermBuilderTest, BinaryNotEnoughSpace)
 {
 	std::array<char, MAXATOMLEN * 3> data{'='};
 
-	builder_.add_binary(&data.front(), data.size());
+	builder_.add_binary(data.data(), data.size());
 
 	EXPECT_NO_THROW(const auto check = builder_.buffer());
 	const auto buffer = builder_.buffer();
@@ -209,18 +209,19 @@ TEST_F(TermBuilderTest, BinaryNotEnoughSpace)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
 
 	std::array<char, MAXATOMLEN> recv;
-	EXPECT_THROW(const auto len = parser.binary(it, &recv.front(), recv.size()), std::length_error);
+	EXPECT_NO_THROW(const auto len = termlib::parse::binary(it, recv.data(), recv.size()); EXPECT_NE(len, recv.size());
+					EXPECT_EQ(len, data.size()));
 }
 
 TEST_F(TermBuilderTest, BinaryBiggerBuffer)
 {
 	std::array<char, MAXATOMLEN> data{'='};
 
-	builder_.add_binary(&data.front(), data.size());
+	builder_.add_binary(data.data(), data.size());
 
 	EXPECT_NO_THROW(const auto check = builder_.buffer());
 	const auto buffer = builder_.buffer();
@@ -229,11 +230,11 @@ TEST_F(TermBuilderTest, BinaryBiggerBuffer)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
 
 	std::array<char, MAXATOMLEN * 3> recv;
-	EXPECT_NO_THROW(const auto len = parser.binary(it, &recv.front(), recv.size()); EXPECT_EQ(len, data.size()));
+	EXPECT_NO_THROW(const auto len = termlib::parse::binary(it, recv.data(), recv.size()); EXPECT_EQ(len, data.size()));
 	EXPECT_TRUE(memcmp(recv.data(), data.data(), data.size()) == 0);
 }
 
@@ -285,14 +286,14 @@ TEST_F(TermBuilderTest, List)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	auto list = parser.complex(it);
+	auto list = termlib::parse::complex(it);
 
 	auto list_it = list.begin();
-	EXPECT_NO_THROW(const auto a = list.int32(list_it); EXPECT_EQ(val, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::int32(list_it); EXPECT_EQ(val, a));
 	EXPECT_NO_THROW(++list_it);
-	EXPECT_NO_THROW(const auto a = list.int32(list_it); EXPECT_EQ(val, a));
+	EXPECT_NO_THROW(const auto a = termlib::parse::int32(list_it); EXPECT_EQ(val, a));
 }
 
 TEST_F(TermBuilderTest, EmptyList)
@@ -306,9 +307,9 @@ TEST_F(TermBuilderTest, EmptyList)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	auto list = parser.complex(it);
+	auto list = termlib::parse::complex(it);
 
 	auto list_it = list.begin();
 	EXPECT_TRUE(list_it == list.end());
@@ -329,14 +330,14 @@ TEST_F(TermBuilderTest, Tuple)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	auto tuple = parser.complex(it);
+	auto tuple = termlib::parse::complex(it);
 
 	auto tuple_it = tuple.begin();
-	EXPECT_NO_THROW(const auto a = tuple.int32(tuple_it); EXPECT_EQ(val, a));
+	EXPECT_NO_THROW(const auto a =termlib::parse::int32(tuple_it); EXPECT_EQ(val, a));
 	EXPECT_NO_THROW(++tuple_it);
-	EXPECT_NO_THROW(const auto a = tuple.int32(tuple_it); EXPECT_EQ(val, a));
+	EXPECT_NO_THROW(const auto a =termlib::parse::int32(tuple_it); EXPECT_EQ(val, a));
 }
 
 TEST_F(TermBuilderTest, EmptyTuple)
@@ -350,9 +351,9 @@ TEST_F(TermBuilderTest, EmptyTuple)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	auto tuple = parser.complex(it);
+	auto tuple = termlib::parse::complex(it);
 
 	auto tuple_it = tuple.begin();
 	EXPECT_TRUE(tuple_it == tuple.end());
@@ -374,13 +375,13 @@ TEST_F(TermBuilderTest, Map)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	auto map = parser.complex(it);
+	auto map = termlib::parse::complex(it);
 
 	auto map_it = map.begin();
-	EXPECT_NO_THROW(const auto k = map.str(map_it++); EXPECT_EQ(key, k));
-	EXPECT_NO_THROW(const auto v = map.int32(map_it); EXPECT_EQ(val, v));
+	EXPECT_NO_THROW(const auto k = termlib::parse::str(map_it++); EXPECT_EQ(key, k));
+	EXPECT_NO_THROW(const auto v = termlib::parse::int32(map_it); EXPECT_EQ(val, v));
 }
 
 TEST_F(TermBuilderTest, EmptyMap)
@@ -394,9 +395,9 @@ TEST_F(TermBuilderTest, EmptyMap)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
-	auto map = parser.complex(it);
+	auto map = termlib::parse::complex(it);
 
 	auto map_it = map.begin();
 	EXPECT_TRUE(map_it == map.end());
@@ -442,33 +443,33 @@ TEST_F(TermBuilderTest, Compound)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
 
-	auto outer_tuple = parser.complex(it);
+	auto outer_tuple = termlib::parse::complex(it);
 	{
 		auto outer_tuple_it = outer_tuple.begin();
-		EXPECT_NO_THROW(const auto a = outer_tuple.real(outer_tuple_it); EXPECT_EQ(val, a));
+		EXPECT_NO_THROW(const auto a = termlib::parse::real(outer_tuple_it); EXPECT_EQ(val, a));
 
 		outer_tuple_it++;
-		auto inner_list = parser.complex(outer_tuple_it);
+		auto inner_list = termlib::parse::complex(outer_tuple_it);
 		{
 			auto inner_list_it = inner_list.begin();
-			EXPECT_NO_THROW(const auto a = inner_list.real(inner_list_it); EXPECT_EQ(val, a));
+			EXPECT_NO_THROW(const auto a = termlib::parse::real(inner_list_it); EXPECT_EQ(val, a));
 
 			inner_list_it++;
-			auto inner_tuple = parser.complex(inner_list_it);
+			auto inner_tuple = termlib::parse::complex(inner_list_it);
 			{
 				auto inner_tuple_it = inner_tuple.begin();
-				EXPECT_NO_THROW(const auto a = inner_tuple.real(inner_tuple_it); EXPECT_EQ(val, a));
+				EXPECT_NO_THROW(const auto a = termlib::parse::real(inner_tuple_it); EXPECT_EQ(val, a));
 				inner_tuple_it++;
-				EXPECT_NO_THROW(const auto a = inner_tuple.real(inner_tuple_it); EXPECT_EQ(val, a));
+				EXPECT_NO_THROW(const auto a = termlib::parse::real(inner_tuple_it); EXPECT_EQ(val, a));
 				inner_tuple_it++;
-				EXPECT_NO_THROW(const auto a = inner_tuple.real(inner_tuple_it); EXPECT_EQ(val, a));
+				EXPECT_NO_THROW(const auto a = termlib::parse::real(inner_tuple_it); EXPECT_EQ(val, a));
 			}
 
 			inner_list_it++;
-			EXPECT_NO_THROW(const auto a = inner_list.real(inner_list_it); EXPECT_EQ(val, a));
+			EXPECT_NO_THROW(const auto a = termlib::parse::real(inner_list_it); EXPECT_EQ(val, a));
 		}
 	}
 }
@@ -488,20 +489,20 @@ TEST_F(TermBuilderTest, RealCase_1)
 	EXPECT_NE(buffer, nullptr);
 	EXPECT_GT(size, 0);
 
-	TermParser parser({buffer, size});
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
 	const auto it = parser.begin();
 
-	auto outer_tuple = parser.complex(it);
+	auto outer_tuple = termlib::parse::complex(it);
 	{
 		auto outer_tuple_it = outer_tuple.begin();
-		EXPECT_NO_THROW(const auto a = outer_tuple.atom(outer_tuple_it); EXPECT_EQ(a, "error"));
+		EXPECT_NO_THROW(const auto a = termlib::parse::atom(outer_tuple_it); EXPECT_EQ(a, "error"));
 		outer_tuple_it++;
-		auto inner_tuple = parser.complex(outer_tuple_it);
+		auto inner_tuple = termlib::parse::complex(outer_tuple_it);
 		{
 			auto inner_tuple_it = inner_tuple.begin();
-			EXPECT_NO_THROW(const auto a = inner_tuple.int32(inner_tuple_it); EXPECT_EQ(1, a));
+			EXPECT_NO_THROW(const auto a = termlib::parse::int32(inner_tuple_it); EXPECT_EQ(1, a));
 			inner_tuple_it++;
-			EXPECT_NO_THROW(const auto a = inner_tuple.str(inner_tuple_it); EXPECT_EQ("text", a));
+			EXPECT_NO_THROW(const auto a = termlib::parse::str(inner_tuple_it); EXPECT_EQ("text", a));
 		}
 	}
 }

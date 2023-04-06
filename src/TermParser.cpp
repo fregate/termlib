@@ -4,6 +4,8 @@
 
 #include <termlib/TermParser.h>
 
+#include <cstring>
+
 #include "cmp.h"
 
 namespace termlib
@@ -23,9 +25,9 @@ void TermParser::Iterator::fill_value()
 
 	int type;
 	int size = 0;
-	ei_get_type(view_.data(), &index_, &type, &size);
+	ei_get_type(reinterpret_cast<const char *>(view_.data()), &index_, &type, &size);
 	int idx{index_};
-	ei_skip_term(view_.data(), &idx);
+	ei_skip_term(reinterpret_cast<const char *>(view_.data()), &idx);
 	value_ = std::make_pair(type, view_.subspan(index_, idx - index_));
 }
 
@@ -49,8 +51,8 @@ TermParser::Iterator & TermParser::Iterator::operator++()
 	if (index_ < 0)
 		return *this;
 
-	auto res = ei_skip_term(view_.data(), &index_);
-	if (res < 0 || index_ >= view_.size()) {
+	auto res = ei_skip_term(reinterpret_cast<const char *>(view_.data()), &index_);
+	if (res < 0 || static_cast<size_t>(index_) >= view_.size()) {
 		index_ = std::numeric_limits<int>::min();
 		return *this;
 	}
@@ -93,7 +95,7 @@ TermParser::TermParser(BinaryBlock view)
 {
 	int index{0};
 	int version;
-	if (ei_decode_version(view_.data(), &index, &version) == 0) {
+	if (ei_decode_version(reinterpret_cast<const char *>(view_.data()), &index, &version) == 0) {
 		view_ = view_.subspan(index);
 	}
 }
@@ -126,138 +128,138 @@ TermParser::Iterator TermParser::end()
 	return Iterator(std::numeric_limits<int>::min(), view_);
 }
 
-std::string TermParser::atom(const Iterator & it) const
+namespace parse
+{
+
+std::string atom(const TermParser::Iterator & it)
 {
 	if (!is(it->first, in{ERL_ATOM_EXT, ERL_SMALL_ATOM_EXT, ERL_ATOM_UTF8_EXT, ERL_SMALL_ATOM_UTF8_EXT}))
-		throw std::runtime_error("atom type error: " + std::to_string(it->first));
+		throw std::runtime_error(std::string("atom type error: ") + std::to_string(it->first));
+
+	static std::array<char, MAXATOMLEN> atom_buffer{0};
 
 	int idx{0};
-	ei_decode_atom(it->second.data(), &idx, &atom_buffer.front());
+	ei_decode_atom(reinterpret_cast<const char *>(it->second.data()), &idx, &atom_buffer.front());
 	return std::string(&atom_buffer.front());
 }
 
-std::int32_t TermParser::int32(const Iterator & it) const
+std::int32_t int32(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT, ERL_LARGE_BIG_EXT}))
-		throw std::runtime_error("int32 type error: " + std::to_string(it->first));
+	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT}))
+		throw std::runtime_error(std::string("int32 type error: ") + std::to_string(it->first));
 
 	int idx{0};
 	long val;
-	ei_decode_long(it->second.data(), &idx, &val);
+	ei_decode_long(reinterpret_cast<const char *>(it->second.data()), &idx, &val);
 	return static_cast<std::int32_t>(val);
 }
 
-std::uint32_t TermParser::uint32(const Iterator & it) const
+std::uint32_t uint32(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT, ERL_LARGE_BIG_EXT}))
-		throw std::runtime_error("uint32 type error: {}" + std::to_string(it->first));
+	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT}))
+		throw std::runtime_error(std::string("uint32 type error: ") + std::to_string(it->first));
 
 	int idx{0};
 	unsigned long val;
-	ei_decode_ulong(it->second.data(), &idx, &val);
+	ei_decode_ulong(reinterpret_cast<const char *>(it->second.data()), &idx, &val);
 	return static_cast<std::uint32_t>(val);
 }
 
-std::int64_t TermParser::int64(const Iterator & it) const
+std::int64_t int64(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT, ERL_LARGE_BIG_EXT}))
-		throw std::runtime_error("int64 type error: " + std::to_string(it->first));
+	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT}))
+		throw std::runtime_error(std::string("int64 type error: ") + std::to_string(it->first));
 
 	int idx{0};
 	long long val;
-	ei_decode_longlong(it->second.data(), &idx, &val);
+	ei_decode_longlong(reinterpret_cast<const char *>(it->second.data()), &idx, &val);
 	return static_cast<std::int64_t>(val);
 }
 
-std::uint64_t TermParser::uint64(const Iterator & it) const
+std::uint64_t uint64(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT, ERL_LARGE_BIG_EXT}))
-		throw std::runtime_error("uint64 type error: " + std::to_string(it->first));
+	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT}))
+		throw std::runtime_error(std::string("uint64 type error: ") + std::to_string(it->first));
 
 	int idx{0};
 	unsigned long long val;
-	ei_decode_ulonglong(it->second.data(), &idx, &val);
+	ei_decode_ulonglong(reinterpret_cast<const char *>(it->second.data()), &idx, &val);
 	return static_cast<std::uint64_t>(val);
 }
 
-double TermParser::real(const Iterator & it) const
+double real(const TermParser::Iterator & it)
 {
 	if (!is(it->first, in{ERL_FLOAT_EXT, NEW_FLOAT_EXT}))
-		throw std::runtime_error("real type error: {}" + std::to_string(it->first));
+		throw std::runtime_error(std::string("real type error: ") + std::to_string(it->first));
 
 	int idx{0};
 	double val;
-	ei_decode_double(it->second.data(), &idx, &val);
+	ei_decode_double(reinterpret_cast<const char *>(it->second.data()), &idx, &val);
 	return val;
 }
 
-std::string TermParser::str(const Iterator & it) const
+std::string str(const TermParser::Iterator & it)
 {
 	if (!is(it->first, in{ERL_STRING_EXT}))
-		throw std::runtime_error("string type error: " + std::to_string(it->first));
+		throw std::runtime_error(std::string("string type error: ") + std::to_string(it->first));
 
+	int type;
+	int size;
 	int idx{0};
-	char * buffer;
-	bool release = false;
-	if (it->second.size() > atom_buffer.size()) {
-		buffer = new char[it->second.size()]{0};
-		release = true;
-	} else {
-		buffer = &atom_buffer.front();
-	}
-	ei_decode_string(it->second.data(), &idx, buffer);
-	std::string res(buffer);
-	if (release) {
-		delete[] buffer;
-	}
+	ei_get_type(reinterpret_cast<const char *>(it->second.data()), &idx, &type, &size);
+
+	std::string res;
+	res.resize(size);
+	ei_decode_string(reinterpret_cast<const char *>(it->second.data()), &idx, res.data());
 	return res;
 }
 
-long TermParser::binary(const Iterator & it, void * dest, size_t size) const
+long binary(const TermParser::Iterator & it, void * dest, size_t size)
 {
 	if (!is(it->first, in{ERL_BINARY_EXT}))
-		throw std::runtime_error("binary type error: " + std::to_string(it->first));
+		throw std::runtime_error(std::string("binary type error: ") + std::to_string(it->first));
 
 	constexpr auto binary_header_size = sizeof(char) + sizeof(std::uint32_t);
 	long binary_size = static_cast<long>(it->second.size() - 0 - binary_header_size);
-	if (size < binary_size)
-		throw std::length_error("destination size is too small, required: " + std::to_string(binary_size)
-								+ "buffer: " + std::to_string(size));
+	if (size < static_cast<size_t>(binary_size))
+		return binary_size;
 
 	int idx{0};
-	ei_decode_binary(it->second.data(), &idx, dest, &binary_size);
+	ei_decode_binary(reinterpret_cast<const char *>(it->second.data()), &idx, dest, &binary_size);
 	return binary_size;
 }
 
-TermParser TermParser::complex(const Iterator & it) const
+TermParser complex(const TermParser::Iterator & it)
 {
 	if (!is(it->first, in{ERL_LIST_EXT, ERL_SMALL_TUPLE_EXT, ERL_LARGE_TUPLE_EXT, ERL_MAP_EXT, ERL_NIL_EXT}))
-		throw std::runtime_error("complex type error: " + std::to_string(it->first));
+		throw std::runtime_error(std::string("complex type error: ") + std::to_string(it->first));
 
 	int idx{0};
 	int arity = 0;
 	switch (it->first) {
 		case ERL_LIST_EXT:
-			ei_decode_list_header(it->second.data(), &idx, &arity);
+			ei_decode_list_header(reinterpret_cast<const char *>(it->second.data()), &idx, &arity);
 			break;
 
 		case ERL_SMALL_TUPLE_EXT:
 		case ERL_LARGE_TUPLE_EXT:
-			ei_decode_tuple_header(it->second.data(), &idx, &arity);
+			ei_decode_tuple_header(reinterpret_cast<const char *>(it->second.data()), &idx, &arity);
 			break;
 
 		case ERL_MAP_EXT:
-			ei_decode_map_header(it->second.data(), &idx, &arity);
+			ei_decode_map_header(reinterpret_cast<const char *>(it->second.data()), &idx, &arity);
 			break;
 
 		case ERL_NIL_EXT:
 			break;
 
 		default:
-			throw std::runtime_error("unknown complex type: " + std::to_string(it->first));
+			throw std::runtime_error(std::string("unknown complex type: ") + std::to_string(it->first));
 	}
 
 	return TermParser({it->second.data() + idx, it->second.size() - idx});
 }
+
+}  // namespace parse
 
 }  // namespace termlib

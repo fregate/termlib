@@ -24,13 +24,13 @@ TEST_F(TermParserTest, Iterator_WhileList)
 	const auto buffer = builder_.buffer();
 	const size_t size = builder_.index();
 
-	TermParser parser({buffer, size});
-	const auto list = parser.complex(parser.begin());
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
+	const auto list = termlib::parse::complex(parser.begin());
 	std::size_t c{0};
 
 	auto it = list.begin();
 	while (it != list.end()) {
-		const auto v = (*it).uint64((*it).begin());
+		const auto v = termlib::parse::uint64((*it).begin());
 		EXPECT_EQ(v, c);
 		c++;
 		++it;
@@ -56,11 +56,11 @@ TEST_F(TermParserTest, Iterator_ForList)
 	const auto buffer = builder_.buffer();
 	const size_t size = builder_.index();
 
-	TermParser parser({buffer, size});
-	const auto list = parser.complex(parser.begin());
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
+	const auto list = termlib::parse::complex(parser.begin());
 	std::size_t c{0};
 	for (auto p : list) {
-		const auto v = p.uint64(p.begin());
+		const auto v = termlib::parse::uint64(p.begin());
 		EXPECT_EQ(v, c);
 		c++;
 	}
@@ -80,13 +80,13 @@ TEST_F(TermParserTest, Iterator_WhileTuple)
 	const auto buffer = builder_.buffer();
 	const size_t size = builder_.index();
 
-	TermParser parser({buffer, size});
-	const auto tuple = parser.complex(parser.begin());
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
+	const auto tuple = termlib::parse::complex(parser.begin());
 	std::size_t c{0};
 
 	auto it = tuple.begin();
 	while (it != tuple.end()) {
-		const auto v = (*it).uint64((*it).begin());
+		const auto v = termlib::parse::uint64((*it).begin());
 		EXPECT_EQ(v, c);
 		c++;
 		++it;
@@ -112,11 +112,11 @@ TEST_F(TermParserTest, Iterator_ForTuple)
 	const auto buffer = builder_.buffer();
 	const size_t size = builder_.index();
 
-	TermParser parser({buffer, size});
-	const auto tuple = parser.complex(parser.begin());
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
+	const auto tuple = termlib::parse::complex(parser.begin());
 	std::size_t c{0};
 	for (auto p : tuple) {
-		const auto v = p.uint64(p.begin());
+		const auto v = termlib::parse::uint64(p.begin());
 		EXPECT_EQ(v, c);
 		c++;
 	}
@@ -137,14 +137,14 @@ TEST_F(TermParserTest, Iterator_WhileMap)
 	const auto buffer = builder_.buffer();
 	const size_t size = builder_.index();
 
-	TermParser parser({buffer, size});
-	const auto map = parser.complex(parser.begin());
+	TermParser parser({reinterpret_cast<const unsigned char*>(buffer), size});
+	const auto map = termlib::parse::complex(parser.begin());
 	std::size_t c{0};
 
 	auto it = map.begin();
 	while (it != map.end()) {
-		const auto k = map.uint64(it++);
-		const auto v = map.uint64(it);
+		const auto k =termlib::parse::uint64(it++);
+		const auto v =termlib::parse::uint64(it);
 		EXPECT_EQ(k, c);
 		EXPECT_EQ(v, c);
 		++c;

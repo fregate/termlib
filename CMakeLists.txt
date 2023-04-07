@@ -1,5 +1,5 @@
 project(TermLib)
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.19)
 
 set(LIBRARY_NAME term)
 
@@ -10,14 +10,17 @@ target_compile_features(${LIBRARY_NAME} PUBLIC cxx_std_20)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## ------------ Build Tests ---------- ##
-
-option(TERMLIB_BUILD_TESTS "Build unit test" ON)
-
+option(TERMLIB_BUILD_TESTS "Build unit test" OFF)
 ##
 
-include (cmake/common.cmake)
+if(PROJECT_IS_TOP_LEVEL OR TERMLIB_BUILD_TESTS)
+	include (cmake/common.cmake)
+	list(APPEND CMAKE_MODULE_PATH "cmake")
 
-list(APPEND CMAKE_MODULE_PATH "cmake")
+	find_package(conan COMPONENTS gtest/1.11.0)
+	add_subdirectory(tests)
+endif()
+
 find_package(Erlang REQUIRED)
 
 target_include_directories(${LIBRARY_NAME}
@@ -46,8 +49,3 @@ target_link_libraries(${LIBRARY_NAME}Private
 	INTERFACE
 		${LIBRARY_NAME}
 )
-
-if(TERMLIB_BUILD_TESTS)
-	find_package(conan COMPONENTS gtest/1.11.0)
-	add_subdirectory(tests)
-endif(TERMLIB_BUILD_TESTS)

@@ -73,14 +73,34 @@ namespace parse
 {
 
 std::string atom(const TermParser::Iterator & it);
+bool is_atom(const TermParser::Iterator & it);
+
 std::int32_t int32(const TermParser::Iterator & it);
+bool is_int32(const TermParser::Iterator & it);
+
 std::uint32_t uint32(const TermParser::Iterator & it);
+bool is_uint32(const TermParser::Iterator & it);
+
 std::int64_t int64(const TermParser::Iterator & it);
+bool is_int64(const TermParser::Iterator & it);
+
 std::uint64_t uint64(const TermParser::Iterator & it);
+bool is_uint64(const TermParser::Iterator & it);
+
 double real(const TermParser::Iterator & it);
+bool is_real(const TermParser::Iterator & it);
+
 std::string str(const TermParser::Iterator & it);
+bool is_str(const TermParser::Iterator & it);
+
 long binary(const TermParser::Iterator & it, void * dest, size_t size);
+bool is_binary(const TermParser::Iterator & it);
+
 TermParser complex(const TermParser::Iterator & it);
+bool is_complex(const TermParser::Iterator & it);
+bool is_tuple(const TermParser::Iterator & it);
+bool is_list(const TermParser::Iterator & it);
+bool is_map(const TermParser::Iterator & it);
 
 }  // namespace parse
 

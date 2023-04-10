@@ -116,7 +116,7 @@ namespace parse
 
 std::string atom(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_ATOM_EXT, ERL_SMALL_ATOM_EXT, ERL_ATOM_UTF8_EXT, ERL_SMALL_ATOM_UTF8_EXT}))
+	if (!is_atom(it))
 		throw std::runtime_error(std::string("atom type error: ") + std::to_string(it->first));
 
 	static std::array<char, MAXATOMLEN> atom_buffer{0};
@@ -126,9 +126,14 @@ std::string atom(const TermParser::Iterator & it)
 	return std::string(&atom_buffer.front());
 }
 
+bool is_atom(const TermParser::Iterator & it)
+{
+	return is(it->first, in{ERL_ATOM_EXT, ERL_SMALL_ATOM_EXT, ERL_ATOM_UTF8_EXT, ERL_SMALL_ATOM_UTF8_EXT});
+}
+
 std::int32_t int32(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT}))
+	if (!is_int32(it))
 		throw std::runtime_error(std::string("int32 type error: ") + std::to_string(it->first));
 
 	int idx{0};
@@ -137,9 +142,19 @@ std::int32_t int32(const TermParser::Iterator & it)
 	return static_cast<std::int32_t>(val);
 }
 
+bool is_integer(const TermParser::Iterator & it)
+{
+	return is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT, ERL_LARGE_BIG_EXT});
+}
+
+bool is_int32(const TermParser::Iterator & it)
+{
+	return is_integer(it);
+}
+
 std::uint32_t uint32(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT}))
+	if (!is_uint32(it))
 		throw std::runtime_error(std::string("uint32 type error: ") + std::to_string(it->first));
 
 	int idx{0};
@@ -148,9 +163,14 @@ std::uint32_t uint32(const TermParser::Iterator & it)
 	return static_cast<std::uint32_t>(val);
 }
 
+bool is_uint32(const TermParser::Iterator & it)
+{
+	return is_integer(it);
+}
+
 std::int64_t int64(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT}))
+	if (!is_int64(it))
 		throw std::runtime_error(std::string("int64 type error: ") + std::to_string(it->first));
 
 	int idx{0};
@@ -159,9 +179,14 @@ std::int64_t int64(const TermParser::Iterator & it)
 	return static_cast<std::int64_t>(val);
 }
 
+bool is_int64(const TermParser::Iterator & it)
+{
+	return is_integer(it);
+}
+
 std::uint64_t uint64(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_INTEGER_EXT, ERL_SMALL_INTEGER_EXT, ERL_SMALL_BIG_EXT}))
+	if (!is_uint64(it))
 		throw std::runtime_error(std::string("uint64 type error: ") + std::to_string(it->first));
 
 	int idx{0};
@@ -170,9 +195,14 @@ std::uint64_t uint64(const TermParser::Iterator & it)
 	return static_cast<std::uint64_t>(val);
 }
 
+bool is_uint64(const TermParser::Iterator & it)
+{
+	return is_integer(it);
+}
+
 double real(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_FLOAT_EXT, NEW_FLOAT_EXT}))
+	if (!is_real(it))
 		throw std::runtime_error(std::string("real type error: ") + std::to_string(it->first));
 
 	int idx{0};
@@ -181,9 +211,14 @@ double real(const TermParser::Iterator & it)
 	return val;
 }
 
+bool is_real(const TermParser::Iterator & it)
+{
+	return is(it->first, in{ERL_FLOAT_EXT, NEW_FLOAT_EXT});
+}
+
 std::string str(const TermParser::Iterator & it)
 {
-	if (!is(it->first, in{ERL_STRING_EXT, ERL_NIL_EXT}))
+	if (!is_str(it))
 		throw std::runtime_error(std::string("string type error: ") + std::to_string(it->first));
 
 	int type;
@@ -200,9 +235,14 @@ std::string str(const TermParser::Iterator & it)
 	return res;
 }
 
+bool is_str(const TermParser::Iterator & it)
+{
+	return is(it->first, in{ERL_STRING_EXT, ERL_NIL_EXT});
+}
+
 long binary(const TermParser::Iterator & it, void * dest, size_t size)
 {
-	if (!is(it->first, in{ERL_BINARY_EXT}))
+	if (!is_binary(it))
 		throw std::runtime_error(std::string("binary type error: ") + std::to_string(it->first));
 
 	constexpr auto binary_header_size = sizeof(char) + sizeof(std::uint32_t);
@@ -215,10 +255,14 @@ long binary(const TermParser::Iterator & it, void * dest, size_t size)
 	return binary_size;
 }
 
+bool is_binary(const TermParser::Iterator & it)
+{
+	return is(it->first, in{ERL_BINARY_EXT});
+}
+
 TermParser complex(const TermParser::Iterator & it)
 {
-	if (!is(it->first,
-			in{ERL_LIST_EXT, ERL_STRING_EXT, ERL_SMALL_TUPLE_EXT, ERL_LARGE_TUPLE_EXT, ERL_MAP_EXT, ERL_NIL_EXT}))
+	if (!is_complex(it))
 		throw std::runtime_error(std::string("complex type error: ") + std::to_string(it->first));
 
 	int idx{0};
@@ -250,6 +294,27 @@ TermParser complex(const TermParser::Iterator & it)
 	}
 
 	return TermParser({it->second.data() + idx, it->second.size() - idx});
+}
+
+bool is_complex(const TermParser::Iterator & it)
+{
+	return is(it->first,
+			  in{ERL_LIST_EXT, ERL_STRING_EXT, ERL_SMALL_TUPLE_EXT, ERL_LARGE_TUPLE_EXT, ERL_MAP_EXT, ERL_NIL_EXT});
+}
+
+bool is_tuple(const TermParser::Iterator & it)
+{
+	return is(it->first, in{ERL_SMALL_TUPLE_EXT, ERL_LARGE_TUPLE_EXT});
+}
+
+bool is_list(const TermParser::Iterator & it)
+{
+	return is(it->first, in{ERL_LIST_EXT, ERL_STRING_EXT, ERL_NIL_EXT});
+}
+
+bool is_map(const TermParser::Iterator & it)
+{
+	return is(it->first, in{ERL_MAP_EXT});
 }
 
 }  // namespace parse

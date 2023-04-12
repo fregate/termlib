@@ -4,8 +4,6 @@
 
 #include <termlib/TermParser.h>
 
-#include <cstring>
-
 #include "cmp.h"
 
 namespace termlib
@@ -246,7 +244,7 @@ long binary(const TermParser::Iterator & it, void * dest, size_t size)
 		throw std::runtime_error(std::string("binary type error: ") + std::to_string(it->first));
 
 	constexpr auto binary_header_size = sizeof(char) + sizeof(std::uint32_t);
-	long binary_size = static_cast<long>(it->second.size() - 0 - binary_header_size);
+	long binary_size = static_cast<long>(it->second.size() - binary_header_size);
 	if (size < static_cast<size_t>(binary_size))
 		return binary_size;
 

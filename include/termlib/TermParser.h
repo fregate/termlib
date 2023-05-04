@@ -91,6 +91,7 @@ double real(const TermParser::Iterator & it);
 bool is_real(const TermParser::Iterator & it);
 
 std::string str(const TermParser::Iterator & it);
+std::string u8str(const TermParser::Iterator & it);
 bool is_str(const TermParser::Iterator & it);
 
 long binary(const TermParser::Iterator & it, void * dest, size_t size);

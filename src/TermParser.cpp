@@ -1,3 +1,4 @@
+#include <cstring>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -233,6 +234,40 @@ std::string str(const TermParser::Iterator & it)
 	return res;
 }
 
+std::string u8str(const TermParser::Iterator & it)
+{
+	if (!is_list(it))
+		throw std::runtime_error("invalid type to parse utf8. " + std::to_string(it->first));
+
+	std::string res;
+	res.reserve(it->second.size());
+
+	const auto list = complex(it);
+	auto list_it = list.begin();
+
+	while (list_it != list.end())
+	{
+		auto num = uint32(list_it++);
+		if (num < 0x80) {
+			res.push_back(static_cast<char>(num));
+		} else if (num < 0x800) {
+			res.push_back(0xC0 | (num >> 6));
+			res.push_back(0x80 | (num & 0x3F));
+		} else if (num < 0x10000) {
+			res.push_back(0xE0 | (num >> 12));
+			res.push_back(0x80 | ((num >> 6) & 0x3F));
+			res.push_back(0x80 | (num & 0x3F));
+		} else {
+			res.push_back(0xF0 | (num >> 18));
+			res.push_back(0x80 | ((num >> 12) & 0x3F));
+			res.push_back(0x80 | ((num >> 6) & 0x3F));
+			res.push_back(0x80 | (num & 0x3F));
+		}
+	}
+
+	return res;
+}
+
 bool is_str(const TermParser::Iterator & it)
 {
 	return is(it->first, in{ERL_STRING_EXT, ERL_NIL_EXT});
@@ -296,8 +331,7 @@ TermParser complex(const TermParser::Iterator & it)
 
 bool is_complex(const TermParser::Iterator & it)
 {
-	return is(it->first,
-			  in{ERL_LIST_EXT, ERL_STRING_EXT, ERL_SMALL_TUPLE_EXT, ERL_LARGE_TUPLE_EXT, ERL_MAP_EXT, ERL_NIL_EXT});
+	return is_tuple(it) || is_list(it) || is_map(it);
 }
 
 bool is_tuple(const TermParser::Iterator & it)

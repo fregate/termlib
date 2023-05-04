@@ -569,4 +569,49 @@ TEST_F(TermParserTest, Iterator_WhileMap)
 	}
 }
 
+TEST_F(TermParserTest, Utf8_1)
+{
+	constexpr std::array<const unsigned char, 37> utf_string{131, 108, 0,  0,  0,  6,  98, 0,  0,  0,  48, 98, 0,
+															 0,   0,   49, 98, 0,  0,  0,  50, 98, 0,  0,  0,  51,
+															 98,  0,   0,  0,  52, 98, 0,  0,  0,  53, 106};
+
+	TermParser parser({utf_string.data(), utf_string.size()});
+	const auto it = parser.begin();
+	std::string u8 = parse::u8str(it);
+	EXPECT_STREQ(u8.c_str(), "012345");
+}
+
+TEST_F(TermParserTest, Utf8_2)
+{
+	constexpr std::array<const unsigned char, 37> utf_string{131, 108, 0,  0,  0,  6,  98, 0,  0,  4,  79, 98, 0,
+															 0,   4,   49, 98, 0,  0,  4,  59, 98, 0,  0,  4,  62,
+															 98,  0,   0,  4,  58, 98, 0,  0,  4,  62, 106};
+
+	TermParser parser({utf_string.data(), utf_string.size()});
+	const auto it = parser.begin();
+	std::string u8 = parse::u8str(it);
+	EXPECT_STREQ(u8.c_str(), "яблоко");
+}
+
+TEST_F(TermParserTest, Utf8_3)
+{
+	constexpr std::array<const unsigned char, 22> utf_string{131, 108, 0, 0,  0,   3,  98, 0, 0,   84,  80,
+															 98,  0,   0, 53, 194, 98, 0,  0, 213, 92, 106};
+
+	TermParser parser({utf_string.data(), utf_string.size()});
+	const auto it = parser.begin();
+	std::string u8 = parse::u8str(it);
+	EXPECT_STREQ(u8.c_str(), "呐㗂한");
+}
+
+TEST_F(TermParserTest, Utf8_4)
+{
+	constexpr std::array<const unsigned char, 12> utf_string{131, 108, 0, 0, 0, 1, 98, 0, 1, 3, 72, 106};
+
+	TermParser parser({utf_string.data(), utf_string.size()});
+	const auto it = parser.begin();
+	std::string u8 = parse::u8str(it);
+	EXPECT_STREQ(u8.c_str(), "𐍈");
+}
+
 }  // namespace termlib::tests

@@ -614,4 +614,34 @@ TEST_F(TermParserTest, Utf8_4)
 	EXPECT_STREQ(u8.c_str(), "𐍈");
 }
 
+TEST_F(TermParserTest, MapParse)
+{
+	constexpr std::array<const unsigned char, 33> map_term{131, 116, 0,   0,   0,   2,   100, 0,   4,  104, 119,
+														   105, 100, 106, 100, 0,   12,  108, 105, 99, 101, 110,
+														   115, 101, 95,  105, 110, 102, 111, 107, 0,  1,   97};
+
+	TermParser parser({map_term.data(), map_term.size()});
+	TermParser map_parser = termlib::parse::complex(parser.begin());
+
+	bool hwid_check = false;
+	bool license_check = false;
+	auto it = map_parser.begin();
+	while (it != map_parser.end()) {
+		const auto k = termlib::parse::atom(it++);
+		if (k == "hwid") {
+			const auto v = termlib::parse::str(it++);
+			EXPECT_STREQ(v.c_str(), "");
+			hwid_check = true;
+		} else if (k == "license_info") {
+			const auto v = termlib::parse::str(it++);
+			EXPECT_STREQ(v.c_str(), "a");
+			license_check = true;
+		} else {
+			EXPECT_TRUE(false);
+		}
+	}
+
+	EXPECT_TRUE(hwid_check && license_check);
+}
+
 }  // namespace termlib::tests

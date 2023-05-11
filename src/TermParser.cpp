@@ -56,9 +56,6 @@ TermParser::Iterator & TermParser::Iterator::operator++()
 	}
 
 	fill_value();
-	if (value_.first == ERL_NIL_EXT) {
-		index_ = std::numeric_limits<int>::min();
-	}
 	return *this;
 }
 

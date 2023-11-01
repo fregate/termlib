@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include <termlib/Exception.h>
 #include <termlib/TermBuilder.h>
 
 namespace termlib
@@ -12,15 +13,32 @@ TermBuilder::TermBuilder()
 	ei_x_new_with_version(&buff_);
 }
 
+TermBuilder::TermBuilder(TermBuilder && rhs)
+	: buff_{rhs.buff_}
+	, arities_{std::move(rhs.arities_)}
+{
+	std::memset(&rhs.buff_, 0, sizeof(rhs.buff_));
+}
+
 TermBuilder::~TermBuilder()
 {
 	ei_x_free(&buff_);
 }
 
+TermBuilder & TermBuilder::operator=(TermBuilder && rhs)
+{
+	buff_ = rhs.buff_;
+	arities_ = std::move(rhs.arities_);
+	std::memset(&rhs.buff_, 0, sizeof(rhs.buff_));
+	return *this;
+}
+
 char * TermBuilder::buffer() const
 {
 	if (!arities_.empty())
-		throw std::runtime_error("invalid terms structure");
+	{
+		throw std::system_error(std::make_error_code(TermBuilderErrors::InvalidArity), "invalid terms structure");
+	}
 
 	return buff_.buff;
 }
@@ -30,10 +48,17 @@ int TermBuilder::index() const
 	return buff_.index;
 }
 
+bool TermBuilder::empty() const
+{
+	return buff_.index == 1; // version
+}
+
 void TermBuilder::add_atom(const std::string & atom)
 {
 	if (atom.size() >= MAXATOMLEN)
-		throw std::invalid_argument("atom is too long");
+	{
+		throw std::system_error(std::make_error_code(TermBuilderErrors::AtomTooLong));
+	}
 
 	ei_x_encode_atom_len_as(&buff_, atom.c_str(), atom.size(), ERLANG_LATIN1, ERLANG_UTF8);
 	update_arity();
@@ -84,10 +109,13 @@ void TermBuilder::add_double(double value)
 void TermBuilder::start_list(size_t arity)
 {
 	update_arity();
-	if (arity != 0) {
+	if (arity != 0)
+	{
 		arities_.emplace_back(arity, ComplexStruct::List);
 		ei_x_encode_list_header(&buff_, arity);
-	} else {
+	}
+	else
+	{
 		ei_x_encode_empty_list(&buff_);
 	}
 }
@@ -95,7 +123,8 @@ void TermBuilder::start_list(size_t arity)
 void TermBuilder::start_map(size_t arity)
 {
 	update_arity();
-	if (arity != 0) {
+	if (arity != 0)
+	{
 		arities_.emplace_back(arity * 2, ComplexStruct::Map);
 	}
 	ei_x_encode_map_header(&buff_, arity);
@@ -104,7 +133,8 @@ void TermBuilder::start_map(size_t arity)
 void TermBuilder::start_tuple(size_t arity)
 {
 	update_arity();
-	if (arity != 0) {
+	if (arity != 0)
+	{
 		arities_.emplace_back(arity, ComplexStruct::Tuple);
 	}
 	ei_x_encode_tuple_header(&buff_, arity);
@@ -113,7 +143,9 @@ void TermBuilder::start_tuple(size_t arity)
 void TermBuilder::update_arity()
 {
 	if (arities_.empty())
-		throw std::runtime_error("invalid term build order");
+	{
+		throw std::system_error(std::make_error_code(TermBuilderErrors::InvalidArity), "invalid term build order");
+	}
 
 	const auto current = --arities_.back().first;
 	if (current != 0)
@@ -121,9 +153,10 @@ void TermBuilder::update_arity()
 
 	const auto ds = arities_.back().second;
 	arities_.pop_back();
-	if (ds == ComplexStruct::List) {
+	if (ds == ComplexStruct::List)
+	{
 		ei_x_encode_empty_list(&buff_);
 	}
 }
 
-}  // namespace termlib
+} // namespace termlib

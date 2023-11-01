@@ -4,20 +4,16 @@ cmake_minimum_required(VERSION 3.19)
 set(LIBRARY_NAME term)
 
 add_library(${LIBRARY_NAME} STATIC)
-add_library(${LIBRARY_NAME}Private INTERFACE)
 
 target_compile_features(${LIBRARY_NAME} PUBLIC cxx_std_20)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## ------------ Build Tests ---------- ##
 option(TERMLIB_BUILD_TESTS "Build unit test" OFF)
 ##
 
-if(PROJECT_IS_TOP_LEVEL OR TERMLIB_BUILD_TESTS)
-	include (cmake/common.cmake)
-	list(APPEND CMAKE_MODULE_PATH "cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-	find_package(conan COMPONENTS gtest/1.11.0)
+if(TERMLIB_BUILD_TESTS)
 	add_subdirectory(tests)
 endif()
 
@@ -30,10 +26,12 @@ target_include_directories(${LIBRARY_NAME}
 
 target_sources(${LIBRARY_NAME}
 	PUBLIC
+		include/termlib/Exception.h
 		include/termlib/TermBuilder.h
 		include/termlib/TermParser.h
 
 	PRIVATE
+		src/Exception.cpp
 		src/TermBuilder.cpp
 		src/TermParser.cpp
 )
@@ -44,8 +42,3 @@ target_link_libraries(${LIBRARY_NAME}
 		Erlang::Erlang
 )
 
-# Private interface
-target_link_libraries(${LIBRARY_NAME}Private
-	INTERFACE
-		${LIBRARY_NAME}
-)

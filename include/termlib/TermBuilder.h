@@ -2,20 +2,28 @@
 
 #include <ei.h>
 
+#include <cstdint>
 #include <list>
 #include <string>
 
 namespace termlib
 {
 
-class TermBuilder
+class TermBuilder final
 {
 public:
 	TermBuilder();
+	TermBuilder(const TermBuilder &) = delete;
+	TermBuilder(TermBuilder &&);
 	~TermBuilder();
+
+	TermBuilder & operator=(TermBuilder &) = delete;
+	TermBuilder & operator=(TermBuilder &&);
 
 	[[nodiscard]] char * buffer() const;
 	[[nodiscard]] int index() const;
+
+	[[nodiscard]] bool empty() const;
 
 	void add_atom(const std::string & atom);
 	void add_int32(std::int32_t value);
@@ -45,7 +53,7 @@ private:
 	};
 
 	std::list<std::pair<size_t, ComplexStruct>> arities_{
-		{1, ComplexStruct::None}};  // only one term can be added, for complex data have to use lists, maps or tuples
+		{1, ComplexStruct::None}}; // only one term can be added, for complex data have to use lists, maps or tuples
 };
 
-}  // namespace termlib
+} // namespace termlib

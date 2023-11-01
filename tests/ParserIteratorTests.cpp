@@ -8,7 +8,7 @@
 namespace termlib::tests
 {
 
-class TermParserTest : public ::testing::Test
+class ParserIteratorTest : public ::testing::Test
 {
 protected:
 	TermBuilder builder_;
@@ -34,12 +34,16 @@ protected:
 	};
 };
 
-TEST_F(TermParserTest, CheckAtom)
+TEST_F(ParserIteratorTest, CheckAtom)
 {
 	constexpr std::array<const unsigned char, 4> exts{
-		ERL_ATOM_EXT, ERL_SMALL_ATOM_EXT, ERL_ATOM_UTF8_EXT, ERL_SMALL_ATOM_UTF8_EXT};
+		ERL_ATOM_EXT,
+		ERL_SMALL_ATOM_EXT,
+		ERL_ATOM_UTF8_EXT,
+		ERL_SMALL_ATOM_UTF8_EXT};
 
-	for (const auto ext : exts) {
+	for (const auto ext : exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_TRUE(parse::is_atom(p.begin()));
@@ -61,14 +65,15 @@ TEST_F(TermParserTest, CheckAtom)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_atom(p.begin()));
 	}
 }
 
-TEST_F(TermParserTest, CheckInt97)
+TEST_F(ParserIteratorTest, CheckInt97)
 {
 	const auto & term = terms.at(ERL_SMALL_INTEGER_EXT);
 	TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
@@ -91,7 +96,8 @@ TEST_F(TermParserTest, CheckInt97)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_int32(p.begin()));
@@ -99,7 +105,7 @@ TEST_F(TermParserTest, CheckInt97)
 	}
 }
 
-TEST_F(TermParserTest, CheckInt98)
+TEST_F(ParserIteratorTest, CheckInt98)
 {
 	const auto & term = terms.at(ERL_INTEGER_EXT);
 	TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
@@ -122,7 +128,8 @@ TEST_F(TermParserTest, CheckInt98)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_int32(p.begin()));
@@ -130,10 +137,11 @@ TEST_F(TermParserTest, CheckInt98)
 	}
 }
 
-TEST_F(TermParserTest, CheckLongLong)
+TEST_F(ParserIteratorTest, CheckLongLong)
 {
 	constexpr std::array<const unsigned char, 2> exts{ERL_SMALL_BIG_EXT, ERL_LARGE_BIG_EXT};
-	for (const auto ext : exts) {
+	for (const auto ext : exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_TRUE(parse::is_int64(p.begin()));
@@ -156,7 +164,8 @@ TEST_F(TermParserTest, CheckLongLong)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_int64(p.begin()));
@@ -164,10 +173,11 @@ TEST_F(TermParserTest, CheckLongLong)
 	}
 }
 
-TEST_F(TermParserTest, CheckFloat)
+TEST_F(ParserIteratorTest, CheckFloat)
 {
 	constexpr std::array<const unsigned char, 2> exts{ERL_FLOAT_EXT, NEW_FLOAT_EXT};
-	for (const auto ext : exts) {
+	for (const auto ext : exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_TRUE(parse::is_real(p.begin()));
@@ -191,14 +201,15 @@ TEST_F(TermParserTest, CheckFloat)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_real(p.begin()));
 	}
 }
 
-TEST_F(TermParserTest, CheckString)
+TEST_F(ParserIteratorTest, CheckString)
 {
 	const auto & term = terms.at(ERL_STRING_EXT);
 	TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
@@ -222,14 +233,15 @@ TEST_F(TermParserTest, CheckString)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_str(p.begin()));
 	}
 }
 
-TEST_F(TermParserTest, CheckEmptyString)
+TEST_F(ParserIteratorTest, CheckEmptyString)
 {
 	const auto & term = terms.at(ERL_NIL_EXT);
 	TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
@@ -253,14 +265,15 @@ TEST_F(TermParserTest, CheckEmptyString)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_str(p.begin()));
 	}
 }
 
-TEST_F(TermParserTest, CheckBinary)
+TEST_F(ParserIteratorTest, CheckBinary)
 {
 	const auto & term = terms.at(ERL_BINARY_EXT);
 	TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
@@ -285,14 +298,15 @@ TEST_F(TermParserTest, CheckBinary)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_binary(p.begin()));
 	}
 }
 
-TEST_F(TermParserTest, CheckMap)
+TEST_F(ParserIteratorTest, CheckMap)
 {
 	const auto & term = terms.at(ERL_MAP_EXT);
 	TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
@@ -317,17 +331,19 @@ TEST_F(TermParserTest, CheckMap)
 		ERL_LARGE_BIG_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_map(p.begin()));
 	}
 }
 
-TEST_F(TermParserTest, CheckTuple)
+TEST_F(ParserIteratorTest, CheckTuple)
 {
 	constexpr std::array<const unsigned char, 2> exts{ERL_SMALL_TUPLE_EXT, ERL_LARGE_TUPLE_EXT};
-	for (const auto ext : exts) {
+	for (const auto ext : exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_TRUE(parse::is_tuple(p.begin()));
@@ -351,17 +367,19 @@ TEST_F(TermParserTest, CheckTuple)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_tuple(p.begin()));
 	}
 }
 
-TEST_F(TermParserTest, CheckList)
+TEST_F(ParserIteratorTest, CheckList)
 {
 	constexpr std::array<const unsigned char, 2> exts{ERL_LIST_EXT, ERL_NIL_EXT};
-	for (const auto ext : exts) {
+	for (const auto ext : exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_TRUE(parse::is_list(p.begin()));
@@ -384,18 +402,24 @@ TEST_F(TermParserTest, CheckList)
 		ERL_MAP_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_list(p.begin()));
 	}
 }
 
-TEST_F(TermParserTest, CheckComplex)
+TEST_F(ParserIteratorTest, CheckComplex)
 {
 	constexpr std::array<const unsigned char, 5> exts{
-		ERL_LIST_EXT, ERL_NIL_EXT, ERL_LARGE_TUPLE_EXT, ERL_SMALL_TUPLE_EXT, ERL_MAP_EXT};
-	for (const auto ext : exts) {
+		ERL_LIST_EXT,
+		ERL_NIL_EXT,
+		ERL_LARGE_TUPLE_EXT,
+		ERL_SMALL_TUPLE_EXT,
+		ERL_MAP_EXT};
+	for (const auto ext : exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_TRUE(parse::is_complex(p.begin()));
@@ -415,19 +439,21 @@ TEST_F(TermParserTest, CheckComplex)
 		ERL_LARGE_BIG_EXT,
 	};
 
-	for (const auto ext : invalid_exts) {
+	for (const auto ext : invalid_exts)
+	{
 		const auto & term = terms.at(ext);
 		TermParser p({reinterpret_cast<const unsigned char *>(term.data()), term.size()});
 		EXPECT_FALSE(parse::is_list(p.begin()));
 	}
 }
 
-TEST_F(TermParserTest, Iterator_WhileList)
+TEST_F(ParserIteratorTest, Iterator_WhileList)
 {
 	const std::size_t count{3};
 
 	EXPECT_NO_THROW(builder_.start_list(count));
-	for (std::size_t idx = 0; idx < count; ++idx) {
+	for (std::size_t idx = 0; idx < count; ++idx)
+	{
 		EXPECT_NO_THROW(builder_.add_uint64(idx));
 	}
 
@@ -435,11 +461,12 @@ TEST_F(TermParserTest, Iterator_WhileList)
 	const size_t size = builder_.index();
 
 	TermParser parser({reinterpret_cast<const unsigned char *>(buffer), size});
-	const auto list = termlib::parse::complex(parser.begin());
+	const auto list = termlib::parse::list(parser.begin());
 	std::size_t c{0};
 
 	auto it = list.begin();
-	while (it != list.end()) {
+	while (it != list.end())
+	{
 		const auto v = termlib::parse::uint64((*it).begin());
 		EXPECT_EQ(v, c);
 		c++;
@@ -449,17 +476,19 @@ TEST_F(TermParserTest, Iterator_WhileList)
 	EXPECT_EQ(c, count);
 
 	// check boundary
-	for (int over = 10; over > 0; --over) {
+	for (int over = 10; over > 0; --over)
+	{
 		EXPECT_TRUE(it++ == list.end());
 	}
 }
 
-TEST_F(TermParserTest, Iterator_ForList)
+TEST_F(ParserIteratorTest, Iterator_ForList)
 {
 	const std::size_t count{3};
 
 	EXPECT_NO_THROW(builder_.start_list(count));
-	for (std::size_t idx = 0; idx < count; ++idx) {
+	for (std::size_t idx = 0; idx < count; ++idx)
+	{
 		EXPECT_NO_THROW(builder_.add_uint64(idx));
 	}
 
@@ -467,9 +496,10 @@ TEST_F(TermParserTest, Iterator_ForList)
 	const size_t size = builder_.index();
 
 	TermParser parser({reinterpret_cast<const unsigned char *>(buffer), size});
-	const auto list = termlib::parse::complex(parser.begin());
+	const auto list = termlib::parse::list(parser.begin());
 	std::size_t c{0};
-	for (auto p : list) {
+	for (auto p : list)
+	{
 		const auto v = termlib::parse::uint64(p.begin());
 		EXPECT_EQ(v, c);
 		c++;
@@ -478,12 +508,13 @@ TEST_F(TermParserTest, Iterator_ForList)
 	EXPECT_EQ(c, count);
 }
 
-TEST_F(TermParserTest, Iterator_WhileTuple)
+TEST_F(ParserIteratorTest, Iterator_WhileTuple)
 {
 	const std::size_t count{3};
 
 	EXPECT_NO_THROW(builder_.start_tuple(count));
-	for (std::size_t idx = 0; idx < count; ++idx) {
+	for (std::size_t idx = 0; idx < count; ++idx)
+	{
 		EXPECT_NO_THROW(builder_.add_uint64(idx));
 	}
 
@@ -491,11 +522,12 @@ TEST_F(TermParserTest, Iterator_WhileTuple)
 	const size_t size = builder_.index();
 
 	TermParser parser({reinterpret_cast<const unsigned char *>(buffer), size});
-	const auto tuple = termlib::parse::complex(parser.begin());
+	const auto tuple = termlib::parse::tuple(parser.begin());
 	std::size_t c{0};
 
 	auto it = tuple.begin();
-	while (it != tuple.end()) {
+	while (it != tuple.end())
+	{
 		const auto v = termlib::parse::uint64((*it).begin());
 		EXPECT_EQ(v, c);
 		c++;
@@ -505,17 +537,19 @@ TEST_F(TermParserTest, Iterator_WhileTuple)
 	EXPECT_EQ(c, count);
 
 	// check boundary
-	for (int over = 10; over > 0; --over) {
+	for (int over = 10; over > 0; --over)
+	{
 		EXPECT_TRUE(it++ == tuple.end());
 	}
 }
 
-TEST_F(TermParserTest, Iterator_ForTuple)
+TEST_F(ParserIteratorTest, Iterator_ForTuple)
 {
 	const std::size_t count{3};
 
 	EXPECT_NO_THROW(builder_.start_tuple(count));
-	for (std::size_t idx = 0; idx < count; ++idx) {
+	for (std::size_t idx = 0; idx < count; ++idx)
+	{
 		EXPECT_NO_THROW(builder_.add_uint64(idx));
 	}
 
@@ -523,9 +557,10 @@ TEST_F(TermParserTest, Iterator_ForTuple)
 	const size_t size = builder_.index();
 
 	TermParser parser({reinterpret_cast<const unsigned char *>(buffer), size});
-	const auto tuple = termlib::parse::complex(parser.begin());
+	const auto tuple = termlib::parse::tuple(parser.begin());
 	std::size_t c{0};
-	for (auto p : tuple) {
+	for (auto p : tuple)
+	{
 		const auto v = termlib::parse::uint64(p.begin());
 		EXPECT_EQ(v, c);
 		c++;
@@ -534,12 +569,13 @@ TEST_F(TermParserTest, Iterator_ForTuple)
 	EXPECT_EQ(c, count);
 }
 
-TEST_F(TermParserTest, Iterator_WhileMap)
+TEST_F(ParserIteratorTest, Iterator_WhileMap)
 {
 	const std::size_t count{3};
 
 	EXPECT_NO_THROW(builder_.start_map(count));
-	for (std::size_t idx = 0; idx < count; ++idx) {
+	for (std::size_t idx = 0; idx < count; ++idx)
+	{
 		EXPECT_NO_THROW(builder_.add_uint64(idx));
 		EXPECT_NO_THROW(builder_.add_uint64(idx));
 	}
@@ -548,11 +584,12 @@ TEST_F(TermParserTest, Iterator_WhileMap)
 	const size_t size = builder_.index();
 
 	TermParser parser({reinterpret_cast<const unsigned char *>(buffer), size});
-	const auto map = termlib::parse::complex(parser.begin());
+	const auto map = termlib::parse::map(parser.begin());
 	std::size_t c{0};
 
 	auto it = map.begin();
-	while (it != map.end()) {
+	while (it != map.end())
+	{
 		const auto k = termlib::parse::uint64(it++);
 		const auto v = termlib::parse::uint64(it);
 		EXPECT_EQ(k, c);
@@ -564,12 +601,13 @@ TEST_F(TermParserTest, Iterator_WhileMap)
 	EXPECT_EQ(c, count);
 
 	// check boundary
-	for (int over = 10; over > 0; --over) {
+	for (int over = 10; over > 0; --over)
+	{
 		EXPECT_TRUE(it++ == map.end());
 	}
 }
 
-TEST_F(TermParserTest, Utf8_1)
+TEST_F(ParserIteratorTest, Utf8_1)
 {
 	constexpr std::array<const unsigned char, 37> utf_string{131, 108, 0,  0,  0,  6,  98, 0,  0,  0,  48, 98, 0,
 															 0,   0,   49, 98, 0,  0,  0,  50, 98, 0,  0,  0,  51,
@@ -581,7 +619,7 @@ TEST_F(TermParserTest, Utf8_1)
 	EXPECT_STREQ(u8.c_str(), "012345");
 }
 
-TEST_F(TermParserTest, Utf8_2)
+TEST_F(ParserIteratorTest, Utf8_2)
 {
 	constexpr std::array<const unsigned char, 37> utf_string{131, 108, 0,  0,  0,  6,  98, 0,  0,  4,  79, 98, 0,
 															 0,   4,   49, 98, 0,  0,  4,  59, 98, 0,  0,  4,  62,
@@ -593,10 +631,10 @@ TEST_F(TermParserTest, Utf8_2)
 	EXPECT_STREQ(u8.c_str(), "яблоко");
 }
 
-TEST_F(TermParserTest, Utf8_3)
+TEST_F(ParserIteratorTest, Utf8_3)
 {
-	constexpr std::array<const unsigned char, 22> utf_string{131, 108, 0, 0,  0,   3,  98, 0, 0,   84,  80,
-															 98,  0,   0, 53, 194, 98, 0,  0, 213, 92, 106};
+	constexpr std::array<const unsigned char, 22> utf_string{
+		131, 108, 0, 0, 0, 3, 98, 0, 0, 84, 80, 98, 0, 0, 53, 194, 98, 0, 0, 213, 92, 106};
 
 	TermParser parser({utf_string.data(), utf_string.size()});
 	const auto it = parser.begin();
@@ -604,7 +642,7 @@ TEST_F(TermParserTest, Utf8_3)
 	EXPECT_STREQ(u8.c_str(), "呐㗂한");
 }
 
-TEST_F(TermParserTest, Utf8_4)
+TEST_F(ParserIteratorTest, Utf8_4)
 {
 	constexpr std::array<const unsigned char, 12> utf_string{131, 108, 0, 0, 0, 1, 98, 0, 1, 3, 72, 106};
 
@@ -614,29 +652,35 @@ TEST_F(TermParserTest, Utf8_4)
 	EXPECT_STREQ(u8.c_str(), "𐍈");
 }
 
-TEST_F(TermParserTest, MapParse)
+TEST_F(ParserIteratorTest, MapParse)
 {
 	constexpr std::array<const unsigned char, 33> map_term{131, 116, 0,   0,   0,   2,   100, 0,   4,  104, 119,
 														   105, 100, 106, 100, 0,   12,  108, 105, 99, 101, 110,
 														   115, 101, 95,  105, 110, 102, 111, 107, 0,  1,   97};
 
 	TermParser parser({map_term.data(), map_term.size()});
-	TermParser map_parser = termlib::parse::complex(parser.begin());
+	TermParser map_parser = termlib::parse::map(parser.begin());
 
 	bool hwid_check = false;
 	bool license_check = false;
 	auto it = map_parser.begin();
-	while (it != map_parser.end()) {
+	while (it != map_parser.end())
+	{
 		const auto k = termlib::parse::atom(it++);
-		if (k == "hwid") {
+		if (k == "hwid")
+		{
 			const auto v = termlib::parse::str(it++);
 			EXPECT_STREQ(v.c_str(), "");
 			hwid_check = true;
-		} else if (k == "license_info") {
+		}
+		else if (k == "license_info")
+		{
 			const auto v = termlib::parse::str(it++);
 			EXPECT_STREQ(v.c_str(), "a");
 			license_check = true;
-		} else {
+		}
+		else
+		{
 			EXPECT_TRUE(false);
 		}
 	}
@@ -644,4 +688,4 @@ TEST_F(TermParserTest, MapParse)
 	EXPECT_TRUE(hwid_check && license_check);
 }
 
-}  // namespace termlib::tests
+} // namespace termlib::tests

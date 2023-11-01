@@ -12,7 +12,8 @@ namespace termlib
 class TermParser
 {
 public:
-	using BinaryBlock = std::span<const unsigned char>;
+	using BlockData = unsigned char;
+	using BinaryBlock = std::span<const BlockData>;
 
 	struct Iterator
 	{
@@ -23,14 +24,16 @@ public:
 
 		Iterator(int index, BinaryBlock view);
 
-		data_pointer operator*();
-		value_type * operator->();
-		const value_type * operator->() const;
+		[[nodiscard]] data_pointer operator*();
+		[[nodiscard]] value_type * operator->();
+		[[nodiscard]] const value_type * operator->() const;
 
 		Iterator & operator++();
-		Iterator operator++(int);
+		[[nodiscard]] Iterator operator++(int);
 
-		friend bool operator==(const termlib::TermParser::Iterator & lhs, const termlib::TermParser::Iterator & rhs)
+		[[nodiscard]] friend bool operator==(
+			const termlib::TermParser::Iterator & lhs,
+			const termlib::TermParser::Iterator & rhs)
 		{
 			if (lhs.index_ < 0 && rhs.index_ < 0)
 				return true;
@@ -43,7 +46,9 @@ public:
 				&& lhs.view_.size() == rhs.view_.size();
 		}
 
-		friend bool operator!=(const termlib::TermParser::Iterator & lhs, const termlib::TermParser::Iterator & rhs)
+		[[nodiscard]] friend bool operator!=(
+			const termlib::TermParser::Iterator & lhs,
+			const termlib::TermParser::Iterator & rhs)
 		{
 			return !(operator==(lhs, rhs));
 		}
@@ -58,12 +63,15 @@ public:
 		value_type value_;
 	};
 
-	TermParser(BinaryBlock view);
+	explicit TermParser(const void * data, std::size_t size);
+	explicit TermParser(BinaryBlock view);
+	TermParser(TermParser & rhs);
+	TermParser(TermParser && rhs);
 
-	const Iterator begin() const;
-	const Iterator end() const;
-	Iterator begin();
-	Iterator end();
+	[[nodiscard]] const Iterator begin() const;
+	[[nodiscard]] const Iterator end() const;
+	[[nodiscard]] Iterator begin();
+	[[nodiscard]] Iterator end();
 
 private:
 	BinaryBlock view_;
@@ -72,37 +80,42 @@ private:
 namespace parse
 {
 
-std::string atom(const TermParser::Iterator & it);
-bool is_atom(const TermParser::Iterator & it);
+[[nodiscard]] std::string atom(const TermParser::Iterator & it);
+[[nodiscard]] bool is_atom(const TermParser::Iterator & it);
 
-std::int32_t int32(const TermParser::Iterator & it);
-bool is_int32(const TermParser::Iterator & it);
+[[nodiscard]] std::int32_t int32(const TermParser::Iterator & it);
+[[nodiscard]] bool is_int32(const TermParser::Iterator & it);
 
-std::uint32_t uint32(const TermParser::Iterator & it);
-bool is_uint32(const TermParser::Iterator & it);
+[[nodiscard]] std::uint32_t uint32(const TermParser::Iterator & it);
+[[nodiscard]] bool is_uint32(const TermParser::Iterator & it);
 
-std::int64_t int64(const TermParser::Iterator & it);
-bool is_int64(const TermParser::Iterator & it);
+[[nodiscard]] std::int64_t int64(const TermParser::Iterator & it);
+[[nodiscard]] bool is_int64(const TermParser::Iterator & it);
 
-std::uint64_t uint64(const TermParser::Iterator & it);
-bool is_uint64(const TermParser::Iterator & it);
+[[nodiscard]] std::uint64_t uint64(const TermParser::Iterator & it);
+[[nodiscard]] bool is_uint64(const TermParser::Iterator & it);
 
-double real(const TermParser::Iterator & it);
-bool is_real(const TermParser::Iterator & it);
+[[nodiscard]] double real(const TermParser::Iterator & it);
+[[nodiscard]] bool is_real(const TermParser::Iterator & it);
 
-std::string str(const TermParser::Iterator & it);
-std::string u8str(const TermParser::Iterator & it);
-bool is_str(const TermParser::Iterator & it);
+[[nodiscard]] std::string str(const TermParser::Iterator & it);
+[[nodiscard]] std::string u8str(const TermParser::Iterator & it);
+[[nodiscard]] bool is_str(const TermParser::Iterator & it);
 
-long binary(const TermParser::Iterator & it, void * dest, size_t size);
-bool is_binary(const TermParser::Iterator & it);
+[[nodiscard]] long binary(const TermParser::Iterator & it, void * dest, size_t size);
+[[nodiscard]] bool is_binary(const TermParser::Iterator & it);
 
-TermParser complex(const TermParser::Iterator & it);
-bool is_complex(const TermParser::Iterator & it);
-bool is_tuple(const TermParser::Iterator & it);
-bool is_list(const TermParser::Iterator & it);
-bool is_map(const TermParser::Iterator & it);
+[[deprecated("Use tuple(), list() or map() instead.")]] [[nodiscard]] TermParser complex(
+	const TermParser::Iterator & it);
 
-}  // namespace parse
+[[nodiscard]] TermParser tuple(const TermParser::Iterator & it);
+[[nodiscard]] TermParser list(const TermParser::Iterator & it);
+[[nodiscard]] TermParser map(const TermParser::Iterator & it);
+[[nodiscard]] bool is_complex(const TermParser::Iterator & it);
+[[nodiscard]] bool is_tuple(const TermParser::Iterator & it);
+[[nodiscard]] bool is_list(const TermParser::Iterator & it);
+[[nodiscard]] bool is_map(const TermParser::Iterator & it);
 
-}  // namespace termlib
+} // namespace parse
+
+} // namespace termlib

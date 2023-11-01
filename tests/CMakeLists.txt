@@ -7,6 +7,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_executable(${TESTS_NAME}
     ParserIteratorTests.cpp
     TermBuilderTests.cpp
+    TermParserTests.cpp
 )
 
 set_target_properties(

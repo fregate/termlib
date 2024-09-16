@@ -390,7 +390,7 @@ TermParser list(const TermParser::Iterator & it)
 	{
 		ei_decode_list_header(reinterpret_cast<const char *>(it->second.data()), &idx, &arity);
 	}
-	return TermParser({it->second.data() + idx, it->second.size() - idx});
+	return TermParser(TermParser::BinaryBlock{it->second.data() + idx, it->second.size() - idx});
 }
 
 TermParser map(const TermParser::Iterator & it)
@@ -403,7 +403,7 @@ TermParser map(const TermParser::Iterator & it)
 	int idx{0};
 	int arity{0};
 	ei_decode_map_header(reinterpret_cast<const char *>(it->second.data()), &idx, &arity);
-	return TermParser({it->second.data() + idx, it->second.size() - idx});
+	return TermParser(TermParser::BinaryBlock{it->second.data() + idx, it->second.size() - idx});
 }
 
 TermParser tuple(const TermParser::Iterator & it)
@@ -416,7 +416,7 @@ TermParser tuple(const TermParser::Iterator & it)
 	int idx{0};
 	int arity{0};
 	ei_decode_tuple_header(reinterpret_cast<const char *>(it->second.data()), &idx, &arity);
-	return TermParser({it->second.data() + idx, it->second.size() - idx});
+	return TermParser(TermParser::BinaryBlock{it->second.data() + idx, it->second.size() - idx});
 }
 
 bool is_complex(const TermParser::Iterator & it)

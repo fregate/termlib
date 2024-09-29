@@ -102,7 +102,7 @@ namespace parse
 [[nodiscard]] std::string u8str(const TermParser::Iterator & it);
 [[nodiscard]] bool is_str(const TermParser::Iterator & it);
 
-[[nodiscard]] long binary(const TermParser::Iterator & it, void * dest, size_t size);
+[[nodiscard]] long binary(const TermParser::Iterator & it, void * dest, std::size_t size);
 [[nodiscard]] bool is_binary(const TermParser::Iterator & it);
 
 [[deprecated("Use tuple(), list() or map() instead.")]] [[nodiscard]] TermParser complex(

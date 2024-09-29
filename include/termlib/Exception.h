@@ -33,6 +33,7 @@ public:
 		, expected_{std::move(expected)}
 		, given_{given}
 	{
+		err_ = "invalid type code for parsing function. expected: " + expected_ + ", given: " + std::to_string(given_);
 	}
 
 	[[nodiscard]] const std::string & expected() const
@@ -47,13 +48,12 @@ public:
 
 	[[nodiscard]] const char * what() const noexcept override
 	{
-		const auto err =
-			"invalid type code for parsing function. expected: " + expected_ + ", given: " + std::to_string(given_);
-		return err.c_str();
+		return err_.c_str();
 	}
 
 private:
 	std::string expected_;
+	std::string err_;
 	int given_;
 };
 

@@ -574,10 +574,11 @@ TEST_F(ParserIteratorTest, Iterator_WhileMap)
 	const std::size_t count{3};
 
 	EXPECT_NO_THROW(builder_.start_map(count));
+	std::uint64_t x{0};
 	for (std::size_t idx = 0; idx < count; ++idx)
 	{
-		EXPECT_NO_THROW(builder_.add_uint64(idx));
-		EXPECT_NO_THROW(builder_.add_uint64(idx));
+		EXPECT_NO_THROW(builder_.add_uint64(x++));
+		EXPECT_NO_THROW(builder_.add_uint64(x++));
 	}
 
 	const auto buffer = builder_.buffer();
@@ -585,20 +586,18 @@ TEST_F(ParserIteratorTest, Iterator_WhileMap)
 
 	TermParser parser({reinterpret_cast<const unsigned char *>(buffer), size});
 	const auto map = termlib::parse::map(parser.begin());
-	std::size_t c{0};
 
+	x = 0;
 	auto it = map.begin();
 	while (it != map.end())
 	{
 		const auto k = termlib::parse::uint64(it++);
-		const auto v = termlib::parse::uint64(it);
-		EXPECT_EQ(k, c);
-		EXPECT_EQ(v, c);
-		++c;
-		++it;
+		const auto v = termlib::parse::uint64(it++);
+		EXPECT_EQ(k, x++);
+		EXPECT_EQ(v, x++);
 	}
 
-	EXPECT_EQ(c, count);
+	EXPECT_EQ(x, count * 2);
 
 	// check boundary
 	for (int over = 10; over > 0; --over)

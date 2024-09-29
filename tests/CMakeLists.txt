@@ -10,17 +10,7 @@ add_executable(${TESTS_NAME}
     TermParserTests.cpp
 )
 
-set_target_properties(
-    ${TESTS_NAME} PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN YES
-    VERSION "${PROJECT_VERSION}"
-    SOVERSION "${PROJECT_VERSION_MAJOR}"
-    EXPORT_NAME ${TESTS_NAME}
-    OUTPUT_NAME ${TESTS_NAME}
-)
-
-target_compile_features(${TESTS_NAME} PUBLIC cxx_std_17)
+target_compile_features(${TESTS_NAME} PUBLIC cxx_std_20)
 
 target_link_libraries(${TESTS_NAME}
     PRIVATE

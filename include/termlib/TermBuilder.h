@@ -34,9 +34,9 @@ public:
 	void add_string(const std::string & value);
 	void add_double(double value);
 
-	void start_list(size_t arity);
-	void start_map(size_t arity);
-	void start_tuple(size_t arity);
+	void start_list(std::size_t arity);
+	void start_map(std::size_t arity);
+	void start_tuple(std::size_t arity);
 
 private:
 	void update_arity();
@@ -52,7 +52,7 @@ private:
 		Tuple,
 	};
 
-	std::list<std::pair<size_t, ComplexStruct>> arities_{
+	std::list<std::pair<std::size_t, ComplexStruct>> arities_{
 		{1, ComplexStruct::None}}; // only one term can be added, for complex data have to use lists, maps or tuples
 };
 

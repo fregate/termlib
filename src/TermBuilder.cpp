@@ -1,3 +1,4 @@
+#include <cstring>
 #include <stdexcept>
 
 #include <iostream>
@@ -106,7 +107,7 @@ void TermBuilder::add_double(double value)
 	update_arity();
 }
 
-void TermBuilder::start_list(size_t arity)
+void TermBuilder::start_list(std::size_t arity)
 {
 	update_arity();
 	if (arity != 0)
@@ -120,7 +121,7 @@ void TermBuilder::start_list(size_t arity)
 	}
 }
 
-void TermBuilder::start_map(size_t arity)
+void TermBuilder::start_map(std::size_t arity)
 {
 	update_arity();
 	if (arity != 0)
@@ -130,7 +131,7 @@ void TermBuilder::start_map(size_t arity)
 	ei_x_encode_map_header(&buff_, arity);
 }
 
-void TermBuilder::start_tuple(size_t arity)
+void TermBuilder::start_tuple(std::size_t arity)
 {
 	update_arity();
 	if (arity != 0)

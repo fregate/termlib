@@ -2,9 +2,9 @@
 #include <vector>
 
 #include <erlterm/read.hpp>
-#include <glaze/json/read.hpp>
-#include <glaze/beve/write.hpp>
 #include <glaze/beve/read.hpp>
+#include <glaze/beve/write.hpp>
+#include <glaze/json/read.hpp>
 
 struct Term
 {
@@ -24,6 +24,9 @@ struct Term
 	116, 95,  118, 97,  108, 117, 101, 107, 0,   3,   4,   5,   6,   119, 11,  116, 117, 112, 108, 101, 95,  118,
 	97,  108, 117, 101, 104, 3,   97,  7,   107, 0,   1,   100, 70,  64,  9,   33,  251, 77,  18,  216, 74};
 
+[[maybe_unused]] constexpr std::array<std::uint8_t, 3> test_int{131, 97, 1};
+[[maybe_unused]] constexpr std::array<std::uint8_t, 10> test_double{131, 70, 64, 9, 33, 251, 77, 18, 216, 74};
+
 [[maybe_unused]] constexpr std::array<std::uint8_t, 117> test_beve{
 	3,   20,  20,  118, 97,  108, 117, 101, 73,  123, 0,   0,   0,   16,  97,  116, 111, 109, 2,   36,
 	115, 111, 109, 101, 95,  97,  116, 111, 109, 12,  115, 116, 114, 2,   44,  115, 111, 109, 101, 95,
@@ -35,10 +38,14 @@ struct Term
 
 int main(int, char **)
 {
-	Term t;
+	[[maybe_unused]] Term t;
+	[[maybe_unused]] int i;
+	[[maybe_unused]] double real;
+
 	[[maybe_unused]] glz::error_ctx x;
 	// x = glz::read_beve(t, test_beve);
-	x = erlterm::read_term(t, test_bin);
+	x = erlterm::read_term(i, test_int);
+	x = erlterm::read_term(real, test_double);
 	// x = glz::read_json(t, test_json);
 	// std::vector<char> out;
 	// x = glz::write_beve(t, out);

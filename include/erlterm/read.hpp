@@ -16,43 +16,45 @@ namespace detail
 template <>
 struct skip_value<ERLANG>
 {
-	template <opts Opts>
-	inline static void op(is_context auto && ctx, auto && it, auto && end) noexcept;
+	template <auto Opts>
+	inline static void op(is_context auto && /* ctx */, auto && /* it */, auto && /* end */) noexcept
+	{
+	}
 };
 
 template <>
 struct read<ERLANG>
 {
-	template <auto Opts, class T, class Tag, is_context Ctx, class It0, class It1>
-	requires(has_no_header(Opts))
-	GLZ_ALWAYS_INLINE static void op(T && value, Tag && tag, Ctx && ctx, It0 && it, It1 && end) noexcept
-	{
-		if constexpr (std::is_const_v<std::remove_reference_t<T>>)
-		{
-			if constexpr (Opts.error_on_const_read)
-			{
-				ctx.error = error_code::attempt_const_read;
-			}
-			else
-			{
-				// do not read anything into the const value
-				skip_value<ERLANG>::op<Opts>(std::forward<Ctx>(ctx), std::forward<It0>(it), std::forward<It1>(end));
-			}
-		}
-		else
-		{
-			using V = std::remove_cvref_t<T>;
-			from<ERLANG, V>::template op<Opts>(
-				std::forward<T>(value),
-				std::forward<Tag>(tag),
-				std::forward<Ctx>(ctx),
-				std::forward<It0>(it),
-				std::forward<It1>(end));
-		}
-	}
+	// template <auto Opts, class T, class Tag, is_context Ctx, class It0, class It1>
+	// requires(has_no_header(Opts))
+	// GLZ_ALWAYS_INLINE static void op(T && value, Tag && tag, Ctx && ctx, It0 && it, It1 && end) noexcept
+	// {
+	// 	if constexpr (std::is_const_v<std::remove_reference_t<T>>) [[unlikely]]
+	// 	{
+	// 		if constexpr (Opts.error_on_const_read)
+	// 		{
+	// 			ctx.error = error_code::attempt_const_read;
+	// 		}
+	// 		else
+	// 		{
+	// 			// do not read anything into the const value
+	// 			skip_value<ERLANG>::op<Opts>(std::forward<Ctx>(ctx), std::forward<It0>(it), std::forward<It1>(end));
+	// 		}
+	// 	}
+	// 	else
+	// 	{
+	// 		using V = std::remove_cvref_t<T>;
+	// 		from<ERLANG, V>::template op<no_header_on<Opts>>(
+	// 			std::forward<T>(value),
+	// 			std::forward<Tag>(tag),
+	// 			std::forward<Ctx>(ctx),
+	// 			std::forward<It0>(it),
+	// 			std::forward<It1>(end));
+	// 	}
+	// }
 
 	template <auto Opts, class T, is_context Ctx, class It0, class It1>
-	requires(not has_no_header(Opts))
+	/* requires(not has_no_header(Opts)) */
 	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, It0 && it, It1 && end) noexcept
 	{
 		// decode version
@@ -86,32 +88,21 @@ struct read<ERLANG>
 };
 
 template <class T>
-requires(glaze_value_t<T> && !custom_read<T>)
-struct from<ERLANG, T>
-{
-	template <auto Opts, class Value, is_context Ctx, class It0, class It1>
-	GLZ_ALWAYS_INLINE static void op(Value && value, Ctx && ctx, It0 && it, It1 && end) noexcept
-	{
-		using V = std::decay_t<decltype(get_member(std::declval<Value>(), meta_wrapper_v<T>))>;
-		from<ERLANG, V>::template op<Opts>(
-			get_member(std::forward<Value>(value), meta_wrapper_v<T>),
-			std::forward<Ctx>(ctx),
-			std::forward<It0>(it),
-			std::forward<It1>(end));
-	}
-};
-
-template <class T>
 requires(glaze_object_t<T> || reflectable<T>)
 struct from<ERLANG, T> final
 {
 	template <auto Opts>
 	static void op(auto && value, is_context auto && ctx, auto && it, auto && end) noexcept
 	{
-		[[maybe_unused]] const auto [tag, n_keys] = erlterm::get_type(ctx, it);
+		GLZ_END_CHECK();
+
+		[[maybe_unused]] const auto tag = erlterm::get_type(ctx, it);
+		if (bool(ctx.error)) [[unlikely]]
+		{
+			return;
+		}
 
 		static constexpr auto N = reflect<T>::size;
-
 		static constexpr bit_array<N> all_fields = []
 		{
 			bit_array<N> arr{};
@@ -134,12 +125,7 @@ struct from<ERLANG, T> final
 			}
 		}();
 
-		if (bool(ctx.error)) [[unlikely]]
-		{
-			return;
-		}
-
-		for (size_t i = 0; i < n_keys; ++i)
+		for (size_t i = 0; i < 5; ++i)
 		{
 			if constexpr (is_partial_read<T> || Opts.partial_read)
 			{
@@ -153,7 +139,7 @@ struct from<ERLANG, T> final
 			{
 				static constexpr auto HashInfo = hash_info<T>;
 
- 				const auto n = 1; //erlterm::term_size(ctx, it, idx);
+				const auto n = 1; // erlterm::term_size(ctx, it, idx);
 				if (bool(ctx.error)) [[unlikely]]
 				{
 					return;
@@ -249,11 +235,33 @@ struct from<ERLANG, T> final
 	}
 };
 
+template <num_t T>
+struct from<ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class It0, class It1>
+	static void op(auto && value, Ctx && ctx, It0 && it, It1 && end) noexcept
+	{
+		erlterm::decode_number<std::remove_cvref_t<T>>(
+			std::forward<T>(value),
+			std::forward<Ctx>(ctx),
+			std::forward<It0>(it),
+			std::forward<It1>(end));
+	}
+};
+
 template <class T>
 struct from<ERLANG, T> final
 {
-	template <auto Opts>
-	static void op(auto && , is_context auto && , auto && , auto && ) noexcept
+	template <auto Opts, class Tag, is_context Ctx, class It0, class It1>
+	requires(has_no_header(Opts))
+	static void op(auto && /* value */, Tag && /* tag */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
+	{
+		std::cerr << "here\n";
+	}
+
+	template <auto Opts, is_context Ctx, class It0, class It1>
+	requires(not has_no_header(Opts))
+	static void op(auto && /* value */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
 	{
 		std::cerr << "here\n";
 	}

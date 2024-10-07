@@ -34,26 +34,26 @@ void decode_number_impl(F && func, Ctx && ctx, It0 && it, It1 && end)
 	}
 
 	CHECK_OFFSET();
-	it += index;
+	std::advance(it, index);
 }
 
 } // namespace detail
 
 template <class It>
-bool decode_version(glz::is_context auto && ctx, It && it)
+void decode_version(glz::is_context auto && ctx, It && it)
 {
 	int index{};
 	int version{};
 	if (ei_decode_version(it, &index, &version) < 0)
 	{
 		ctx.error = glz::error_code::syntax_error;
-		return false;
+		return;
 	}
 
 	std::cerr << "term version: " << version << "\n";
 
 	std::advance(it, index);
-	return true;
+	return;
 }
 
 template <class It>
@@ -105,11 +105,13 @@ void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
 {
 	using namespace std::placeholders;
 
+	double v;
 	detail::decode_number_impl(
-		std::bind(ei_decode_double, it, _1, &value),
+		std::bind(ei_decode_double, it, _1, &v),
 		std::forward<Ctx>(ctx),
 		std::forward<It0>(it),
 		std::forward<It1>(end));
+	value = static_cast<std::remove_cvref_t<T>>(v);
 }
 
 template <class T, glz::is_context Ctx, class It0, class It1>
@@ -118,7 +120,8 @@ void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
 {
 	using namespace std::placeholders;
 
-	if constexpr (std::is_signed_v<T>)
+	using V = std::remove_cvref_t<T>;
+	if constexpr (std::is_signed_v<V>)
 	{
 		long long v;
 		detail::decode_number_impl(
@@ -145,7 +148,8 @@ void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
 {
 	using namespace std::placeholders;
 
-	if constexpr (std::is_signed_v<T>)
+	using V = std::remove_cvref_t<T>;
+	if constexpr (std::is_signed_v<V>)
 	{
 		long v;
 		detail::decode_number_impl(
@@ -165,6 +169,54 @@ void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
 			std::forward<It1>(end));
 		value = static_cast<T>(v);
 	}
+}
+
+
+
+template <class It0, class It1>
+void decode_string(auto && value, glz::is_context auto && ctx, It0 && it, It1 && end)
+{
+	int index{};
+	int type{};
+	int sz{};
+	if (ei_get_type(it, &index, &type, &sz) < 0)
+	{
+		ctx.error = glz::error_code::syntax_error;
+		return;
+	}
+
+	value.resize(sz + 1);
+	if (ei_decode_string(it, &index, value.data()) < 0)
+	{
+		ctx.error = glz::error_code::syntax_error;
+		return;
+	}
+
+	CHECK_OFFSET()
+	std::advance(it, index);
+}
+
+template <class It0, class It1>
+void decode_atom(auto && atom, glz::is_context auto && ctx, It0 && it, It1 && end)
+{
+	int index{};
+	int type{};
+	int sz{};
+	if (ei_get_type(it, &index, &type, &sz) < 0)
+	{
+		ctx.error = glz::error_code::syntax_error;
+		return;
+	}
+
+	atom.value.resize(sz + 1);
+	if (ei_decode_atom(it, &index, atom.value.data()) < 0)
+	{
+		ctx.error = glz::error_code::syntax_error;
+		return;
+	}
+
+	CHECK_OFFSET()
+	std::advance(it, index);
 }
 
 template <class It>

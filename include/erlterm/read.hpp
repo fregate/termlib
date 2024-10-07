@@ -5,10 +5,38 @@
 
 #include <erlterm/ei/ei.hpp>
 
+namespace erlterm
+{
+
+struct atom
+{
+	// disable relection
+	atom() = default;
+
+	using underlying = std::string;
+	underlying value;
+};
+
+} // namespace erlterm
+
 namespace glz
 {
 
 inline constexpr uint32_t ERLANG = 20000;
+
+template <class T>
+concept has_resize = requires(T t, size_t sz)
+{
+	t.resize(sz);
+};
+
+template <class T>
+concept erl_string_t =
+	detail::str_t<T> && !std::same_as<std::decay_t<T>, std::string_view> && has_resize<T> && has_data<T>;
+
+template <typename T>
+concept atom_t = std::same_as<std::decay_t<T>, erlterm::atom> && has_resize<typename T::underlying>
+	&& has_data<typename T::underlying>;
 
 namespace detail
 {
@@ -54,11 +82,12 @@ struct read<ERLANG>
 	// }
 
 	template <auto Opts, class T, is_context Ctx, class It0, class It1>
-	/* requires(not has_no_header(Opts)) */
-	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, It0 && it, It1 && end) noexcept
+	requires(not has_no_header(Opts)) GLZ_ALWAYS_INLINE
+		static void op(T && value, Ctx && ctx, It0 && it, It1 && end) noexcept
 	{
 		// decode version
-		if (!erlterm::decode_version(std::forward<Ctx>(ctx), std::forward<It0>(it)))
+		erlterm::decode_version(std::forward<Ctx>(ctx), std::forward<It0>(it));
+		if (bool(ctx.error))
 		{
 			return;
 		}
@@ -88,8 +117,7 @@ struct read<ERLANG>
 };
 
 template <class T>
-requires(glaze_object_t<T> || reflectable<T>)
-struct from<ERLANG, T> final
+requires(reflectable<T>) struct from<ERLANG, T> final
 {
 	template <auto Opts>
 	static void op(auto && value, is_context auto && ctx, auto && it, auto && end) noexcept
@@ -241,7 +269,35 @@ struct from<ERLANG, T> final
 	template <auto Opts, is_context Ctx, class It0, class It1>
 	static void op(auto && value, Ctx && ctx, It0 && it, It1 && end) noexcept
 	{
-		erlterm::decode_number<std::remove_cvref_t<T>>(
+		erlterm::decode_number(
+			std::forward<T>(value),
+			std::forward<Ctx>(ctx),
+			std::forward<It0>(it),
+			std::forward<It1>(end));
+	}
+};
+
+template <erl_string_t T>
+struct from<ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class It0, class It1>
+	static void op(auto && value, Ctx && ctx, It0 && it, It1 && end) noexcept
+	{
+		erlterm::decode_string(
+			std::forward<T>(value),
+			std::forward<Ctx>(ctx),
+			std::forward<It0>(it),
+			std::forward<It1>(end));
+	}
+};
+
+template <atom_t T>
+struct from<ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class It0, class It1>
+	static void op(auto && value, Ctx && ctx, It0 && it, It1 && end) noexcept
+	{
+		erlterm::decode_atom(
 			std::forward<T>(value),
 			std::forward<Ctx>(ctx),
 			std::forward<It0>(it),
@@ -253,15 +309,19 @@ template <class T>
 struct from<ERLANG, T> final
 {
 	template <auto Opts, class Tag, is_context Ctx, class It0, class It1>
-	requires(has_no_header(Opts))
-	static void op(auto && /* value */, Tag && /* tag */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
+	requires(has_no_header(Opts)) static void op(
+		auto && /* value */,
+		Tag && /* tag */,
+		Ctx && /* ctx */,
+		It0 && /* it */,
+		It1 && /* end */) noexcept
 	{
 		std::cerr << "here\n";
 	}
 
 	template <auto Opts, is_context Ctx, class It0, class It1>
-	requires(not has_no_header(Opts))
-	static void op(auto && /* value */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
+	requires(not has_no_header(
+		Opts)) static void op(auto && /* value */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
 	{
 		std::cerr << "here\n";
 	}
@@ -270,7 +330,10 @@ struct from<ERLANG, T> final
 } // namespace detail
 
 template <class T>
-concept read_term_supported = requires { detail::from<ERLANG, std::remove_cvref_t<T>>{}; };
+concept read_term_supported = requires
+{
+	detail::from<ERLANG, std::remove_cvref_t<T>>{};
+};
 
 template <class T>
 struct is_custom_format_supported<ERLANG, T>

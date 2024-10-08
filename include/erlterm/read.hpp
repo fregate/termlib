@@ -26,14 +26,11 @@ namespace glz
 inline constexpr uint32_t ERLANG = 20000;
 
 template <class T>
-concept has_resize = requires(T t, size_t sz) { t.resize(sz); };
-
-template <class T>
 concept erl_string_t =
-	detail::str_t<T> && !std::same_as<std::decay_t<T>, std::string_view> && has_resize<T> && has_data<T>;
+	detail::str_t<T> && !std::same_as<std::decay_t<T>, std::string_view> && resizable<T> && has_data<T>;
 
 template <typename T>
-concept atom_t = std::same_as<std::decay_t<T>, erlterm::atom> && has_resize<typename T::underlying>
+concept atom_t = std::same_as<std::decay_t<T>, erlterm::atom> && resizable<typename T::underlying>
 	&& has_data<typename T::underlying>;
 
 namespace detail
@@ -262,6 +259,20 @@ struct from<ERLANG, T> final
 	}
 };
 
+template <readable_array_t T>
+struct from<ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class It0, class It1>
+	GLZ_ALWAYS_INLINE static void op(auto && value, Ctx && ctx, It0 && it, It1 && end) noexcept
+	{
+		GLZ_END_CHECK();
+		erlterm::decode_binary<Opts>(
+			std::forward<T>(value),
+			std::forward<Ctx>(ctx),
+			std::forward<It0>(it),
+			std::forward<It1>(end));
+	}
+};
 template <boolean_like T>
 struct from<ERLANG, T>
 {

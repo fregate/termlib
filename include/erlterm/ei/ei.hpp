@@ -233,6 +233,69 @@ void decode_boolean(auto && value, Ctx && ctx, It0 && it, It1 && end)
 	std::advance(it, index);
 }
 
+
+template <auto Opts, class T, class It0, class It1>
+void decode_binary(T && value, glz::is_context auto && ctx, It0 && it, It1 && end)
+{
+	using V = glz::range_value_t<std::decay_t<T>>;
+
+	int index{};
+	int type{};
+	int sz{};
+	if (ei_get_type(it, &index, &type, &sz) < 0)
+	{
+		ctx.error = glz::error_code::syntax_error;
+		return;
+	}
+
+	if ((it + sz) > end) [[unlikely]]
+	{
+		ctx.error = glz::error_code::unexpected_end;
+		return;
+	}
+
+	if constexpr (glz::resizable<T>)
+	{
+		value.resize(sz);
+		if constexpr (Opts.shrink_to_fit)
+		{
+			value.shrink_to_fit();
+		}
+	}
+	else
+	{
+		if (static_cast<std::size_t>(sz) > value.size())
+		{
+			ctx.error = glz::error_code::syntax_error;
+			return;
+		}
+	}
+
+	long szl{};
+	if constexpr (sizeof(V) == sizeof(std::uint8_t))
+	{
+		if (ei_decode_binary(it, &index, value.data(), &szl) < 0)
+		{
+			ctx.error = glz::error_code::syntax_error;
+			return;
+		}
+	}
+	else
+	{
+		std::vector<std::uint8_t> buff(sz);
+		if (ei_decode_binary(it, &index, buff.data(), &szl) < 0)
+		{
+			ctx.error = glz::error_code::syntax_error;
+			return;
+		}
+
+		std::copy(buff.begin(), buff.end(), value.begin());
+	}
+
+	CHECK_OFFSET()
+	std::advance(it, index);
+}
+
 template <class It>
 auto decode_map_header(glz::is_context auto && ctx, It && it)
 {

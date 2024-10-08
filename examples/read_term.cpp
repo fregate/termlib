@@ -34,6 +34,8 @@ struct Term
 	test_string{131, 107, 0, 11, 115, 111, 109, 101, 32, 115, 116, 114, 105, 110, 103};
 // bool: true
 [[maybe_unused]] constexpr std::array<std::uint8_t, 8> test_bool{131, 100, 0, 4, 116, 114, 117, 101};
+// binary: 1,2,3,4,5
+[[maybe_unused]] constexpr std::array<std::uint8_t, 11> test_binary{131, 109, 0, 0, 0, 5, 1, 2, 3, 4, 5};
 
 // JSON
 [[maybe_unused]] constexpr std::string_view test_json{
@@ -56,10 +58,14 @@ int main(int, char **)
 	[[maybe_unused]] std::string str;
 	[[maybe_unused]] erlterm::atom a;
 	[[maybe_unused]] bool b;
+	[[maybe_unused]] std::vector<char> bin;
+	[[maybe_unused]] std::array<int, 5> arr;
 
 	[[maybe_unused]] glz::error_ctx x;
 	// x = glz::read_beve(t, test_beve);
-	x = erlterm::read_term(b, test_bool);
+	x = erlterm::read_term(bin, test_binary);
+	x = erlterm::read_term(arr, test_binary);
+	// x = erlterm::read_term(b, test_bool);
 	// x = erlterm::read_term(a, test_atom);
 	// x = erlterm::read_term(str, test_string);
 	// x = erlterm::read_term(t, test_term);

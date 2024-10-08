@@ -171,8 +171,6 @@ void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
 	}
 }
 
-
-
 template <class It0, class It1>
 void decode_string(auto && value, glz::is_context auto && ctx, It0 && it, It1 && end)
 {
@@ -216,6 +214,22 @@ void decode_atom(auto && atom, glz::is_context auto && ctx, It0 && it, It1 && en
 	}
 
 	CHECK_OFFSET()
+	std::advance(it, index);
+}
+
+template <glz::is_context Ctx, class It0, class It1>
+void decode_boolean(auto && value, Ctx && ctx, It0 && it, It1 && end)
+{
+	int index{};
+	int v{};
+	if (ei_decode_boolean(it, &index, &v) < 0) [[unlikely]]
+	{
+		ctx.error = glz::error_code::parse_number_failure;
+		return;
+	}
+
+	CHECK_OFFSET();
+	value = v != 0;
 	std::advance(it, index);
 }
 

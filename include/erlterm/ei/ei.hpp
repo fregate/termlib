@@ -20,6 +20,38 @@ namespace erlterm
 namespace detail
 {
 
+// template<glz::detaul::int_t... Vs>
+// struct in2
+// {
+// 	bool value{false};
+// 	template<typename T>
+// 	constexpr in2(const T& val) : value{val == N} {}
+// };
+
+template <int... Vs>
+struct in2;
+
+// https://www.scs.stanford.edu/~dm/blog/param-pack.html
+template <>
+struct in2<int N, int... Vs>
+{
+	bool value{};
+
+	template<glz::detail::int_t T>
+	constexpr in2(const T& val)
+	{
+		value |= (val == N) | in2<Vs...>(val).value;
+	}
+};
+
+template<>
+struct in2<int N>
+{
+	bool value{false};
+	template<glz::detail::int_t T>
+	constexpr in2(const T& val) : value{val == N} {}
+};
+
 template <class T>
 concept float_t = std::floating_point<std::remove_cvref_t<T>>;
 
@@ -247,6 +279,8 @@ void decode_binary(T && value, glz::is_context auto && ctx, It0 && it, It1 && en
 		ctx.error = glz::error_code::syntax_error;
 		return;
 	}
+
+	constexpr auto acceptable = detail::in2<1, 2, 3, 109>(type).value;
 
 	if ((it + sz) > end) [[unlikely]]
 	{

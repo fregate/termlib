@@ -64,7 +64,7 @@ int main(int, char **)
 	[[maybe_unused]] glz::error_ctx x;
 	// x = glz::read_beve(t, test_beve);
 	x = erlterm::read_term(bin, test_binary);
-	x = erlterm::read_term(arr, test_binary);
+	// x = erlterm::read_term(arr, test_binary);
 	// x = erlterm::read_term(b, test_bool);
 	// x = erlterm::read_term(a, test_atom);
 	// x = erlterm::read_term(str, test_string);

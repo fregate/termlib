@@ -273,6 +273,7 @@ struct from<ERLANG, T> final
 			std::forward<It1>(end));
 	}
 };
+
 template <boolean_like T>
 struct from<ERLANG, T>
 {

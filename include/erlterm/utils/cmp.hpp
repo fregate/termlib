@@ -47,7 +47,7 @@ namespace cmp
 {
 
 template <template <class> class Op, int... Vs, typename T>
-constexpr static bool is(const T & val)
+constexpr bool is(const T & val)
 {
 	return Op<std::integer_sequence<int, Vs...>>(val).value;
 }

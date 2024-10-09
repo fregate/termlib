@@ -90,7 +90,7 @@ auto skip_term(glz::is_context auto && ctx, It && it)
 template <class It>
 auto term_size(glz::is_context auto && ctx, It && it)
 {
-	int index{};
+	int index{0};
 	if (ei_skip_term(it, &index) < 0)
 	{
 		ctx.error = glz::error_code::syntax_error;
@@ -186,37 +186,30 @@ void decode_string(auto && value, glz::is_context auto && ctx, It0 && it, It1 &&
 		return;
 	}
 
-	value.resize(sz + 1);
-	if (ei_decode_string(it, &index, value.data()) < 0)
+	if ((it + sz) > end) [[unlikely]]
 	{
-		ctx.error = glz::error_code::syntax_error;
+		ctx.error = glz::error_code::unexpected_end;
 		return;
 	}
 
-	CHECK_OFFSET()
-	std::advance(it, index);
-}
-
-template <class It0, class It1>
-void decode_atom(auto && atom, glz::is_context auto && ctx, It0 && it, It1 && end)
-{
-	int index{};
-	int type{};
-	int sz{};
-	if (ei_get_type(it, &index, &type, &sz) < 0)
+	value.resize(sz);
+	if (is_atom(type))
 	{
-		ctx.error = glz::error_code::syntax_error;
-		return;
+		if (ei_decode_atom(it, &index, value.data()) < 0)
+		{
+			ctx.error = glz::error_code::syntax_error;
+			return;
+		}
+	}
+	else
+	{
+		if (ei_decode_string(it, &index, value.data()) < 0)
+		{
+			ctx.error = glz::error_code::syntax_error;
+			return;
+		}
 	}
 
-	atom.value.resize(sz + 1);
-	if (ei_decode_atom(it, &index, atom.value.data()) < 0)
-	{
-		ctx.error = glz::error_code::syntax_error;
-		return;
-	}
-
-	CHECK_OFFSET()
 	std::advance(it, index);
 }
 
@@ -294,7 +287,6 @@ void decode_binary(T && value, glz::is_context auto && ctx, It0 && it, It1 && en
 		std::copy(buff.begin(), buff.end(), value.begin());
 	}
 
-	CHECK_OFFSET()
 	std::advance(it, index);
 }
 

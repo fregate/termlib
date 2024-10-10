@@ -2,7 +2,6 @@
 #include <vector>
 
 #include <glaze/beve/read.hpp>
-#include <glaze/beve/write.hpp>
 #include <glaze/json/read.hpp>
 
 #include <erlterm/read.hpp>

@@ -1,0 +1,112 @@
+diff --git a/include/glaze/core/opts.hpp b/include/glaze/core/opts.hpp
+index 0e31c10f..de001a4c 100644
+--- a/include/glaze/core/opts.hpp
++++ b/include/glaze/core/opts.hpp
+@@ -126,24 +126,24 @@ namespace glz
+ 
+ #undef bool_t
+ 
+-   consteval bool has_opening_handled(opts o) { return o.internal & uint32_t(opts::internal::opening_handled); }
++   consteval bool has_opening_handled(const opts & o) noexcept { return o.internal & uint32_t(opts::internal::opening_handled); }
+ 
+-   consteval bool has_closing_handled(opts o) { return o.internal & uint32_t(opts::internal::closing_handled); }
++   consteval bool has_closing_handled(const opts & o) noexcept { return o.internal & uint32_t(opts::internal::closing_handled); }
+ 
+-   consteval bool has_ws_handled(opts o) { return o.internal & uint32_t(opts::internal::ws_handled); }
++   consteval bool has_ws_handled(const opts & o) noexcept { return o.internal & uint32_t(opts::internal::ws_handled); }
+ 
+-   consteval bool has_no_header(opts o) { return o.internal & uint32_t(opts::internal::no_header); }
++   consteval bool has_no_header(const opts & o) noexcept { return o.internal & uint32_t(opts::internal::no_header); }
+ 
+-   consteval bool has_disable_write_unknown(opts o)
++   consteval bool has_disable_write_unknown(const opts & o) noexcept
+    {
+       return o.internal & uint32_t(opts::internal::disable_write_unknown);
+    }
+ 
+-   consteval bool has_is_padded(opts o) { return o.internal & uint32_t(opts::internal::is_padded); }
++   consteval bool has_is_padded(const opts & o) noexcept { return o.internal & uint32_t(opts::internal::is_padded); }
+ 
+-   consteval bool has_disable_padding(opts o) { return o.internal & uint32_t(opts::internal::disable_padding); }
++   consteval bool has_disable_padding(const opts & o) noexcept { return o.internal & uint32_t(opts::internal::disable_padding); }
+ 
+-   consteval bool has_write_unchecked(opts o) { return o.internal & uint32_t(opts::internal::write_unchecked); }
++   consteval bool has_write_unchecked(const opts & o) noexcept { return o.internal & uint32_t(opts::internal::write_unchecked); }
+ 
+    template <opts Opts>
+    constexpr auto opening_handled()
+@@ -381,6 +381,9 @@ namespace glz
+       }
+    }
+ 
++   template <uint32_t Format, class T = void>
++   struct is_custom_format_supported;
++
+    template <uint32_t Format, class T>
+    consteval bool read_format_supported()
+    {
+@@ -397,7 +400,7 @@ namespace glz
+          return read_csv_supported<T>;
+       }
+       else {
+-         static_assert(false_v<T>, "Glaze metadata is probably needed for your type");
++         return is_custom_format_supported<Format, T>::value;
+       }
+    }
+ 
+diff --git a/include/glaze/core/read.hpp b/include/glaze/core/read.hpp
+index 4cd6d6b1..3ab38048 100644
+--- a/include/glaze/core/read.hpp
++++ b/include/glaze/core/read.hpp
+@@ -11,27 +11,36 @@
+ 
+ namespace glz
+ {
+-   template <opts Opts, bool Padded = false>
+-   auto read_iterators(is_context auto&& ctx, contiguous auto&& buffer) noexcept
++   namespace detail
+    {
+-      static_assert(sizeof(decltype(*buffer.data())) == 1);
++      template <bool Padded = false>
++      auto read_iterators_impl(is_context auto&& ctx, contiguous auto&& buffer) noexcept
++      {
++         static_assert(sizeof(decltype(*buffer.data())) == 1);
+ 
+-      auto it = reinterpret_cast<const char*>(buffer.data());
+-      auto end = reinterpret_cast<const char*>(buffer.data()); // to be incremented
++         auto it = reinterpret_cast<const char*>(buffer.data());
++         auto end = reinterpret_cast<const char*>(buffer.data()); // to be incremented
+ 
+-      if (buffer.empty()) [[unlikely]] {
+-         ctx.error = error_code::no_read_input;
+-         return std::pair{it, end};
+-      }
++         if (buffer.empty()) [[unlikely]] {
++            ctx.error = error_code::no_read_input;
++            return std::pair{it, end};
++         }
+ 
+-      if constexpr (Padded) {
+-         end += buffer.size() - padding_bytes;
+-      }
+-      else {
+-         end += buffer.size();
++         if constexpr (Padded) {
++            end += buffer.size() - padding_bytes;
++         }
++         else {
++            end += buffer.size();
++         }
++
++         return std::pair{it, end};
+       }
++   }
+ 
+-      return std::pair{it, end};
++   template <opts Opts, bool Padded = false>
++   auto read_iterators(is_context auto&& ctx, contiguous auto&& buffer) noexcept
++   {
++      return detail::read_iterators_impl<Padded>(ctx, buffer);
+    }
+ 
+    template <opts Opts, class T>

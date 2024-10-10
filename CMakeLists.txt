@@ -33,7 +33,15 @@ endif(TERMLIB_BUILD_EXAMPLES)
 
 find_package(Erlang REQUIRED)
 
-add_subdirectory(thirdparty/glaze)
+include(FetchContent)
+FetchContent_Declare(
+	glaze
+	GIT_REPOSITORY https://github.com/stephenberry/glaze.git
+	GIT_TAG v3.6.1
+	GIT_SHALLOW TRUE
+	PATCH_COMMAND git apply "${CMAKE_CURRENT_LIST_DIR}/thirdparty/glaze.diff"
+)
+FetchContent_MakeAvailable(glaze)
 
 target_include_directories(${LIBRARY_NAME}
 	PUBLIC

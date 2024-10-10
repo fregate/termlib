@@ -314,7 +314,7 @@ void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && en
 
 	it += index;
 
-	for(int idx = 0; idx < arity; idx++)
+	for (int idx = 0; idx < arity; idx++)
 	{
 		V v;
 		glz::detail::from<glz::ERLANG, V>::template op<Opts>(v, ctx, it, end);
@@ -325,6 +325,8 @@ void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && en
 
 		value[idx] = std::move(v);
 	}
+
+	// TODO handle elang list endings
 }
 
 template <auto Opts, class T, glz::is_context Ctx, class It0, class It1>
@@ -366,8 +368,10 @@ void decode_sequence(T && value, Ctx && ctx, It0 && it, It1 && end)
 				std::forward<It1>(end));
 		}
 	}
-	else if (is_tuple(type))
+	// else if tuple?
+	else
 	{
+		ctx.error = glz::error_code::elements_not_convertible_to_design;
 	}
 }
 
@@ -377,6 +381,20 @@ auto decode_map_header(glz::is_context auto && ctx, It && it)
 	int arity{};
 	int index{};
 	if (ei_decode_map_header(it, &index, &arity) < 0)
+	{
+		ctx.error = glz::error_code::syntax_error;
+		return std::pair<std::size_t, std::size_t>(-1ull, -1ull);
+	}
+
+	return std::pair<std::size_t, std::size_t>(static_cast<std::size_t>(arity), static_cast<std::size_t>(index));
+}
+
+template <class It>
+auto decode_tuple_header(glz::is_context auto && ctx, It && it)
+{
+	int arity{};
+	int index{};
+	if (ei_decode_tuple_header(it, &index, &arity) < 0)
 	{
 		ctx.error = glz::error_code::syntax_error;
 		return std::pair<std::size_t, std::size_t>(-1ull, -1ull);

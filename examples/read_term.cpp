@@ -23,119 +23,23 @@ struct Term
   various_types_list => {7,"ghi",3.1415926}}
 */
 [[maybe_unused]] constexpr std::array<std::uint8_t, 105> test_term{
-	131,
+	131, 
 	// map
-	116,
-	0,
-	0,
-	0,
-	5,
-	// aaa                          =>           abc
-	100,
-	0,
-	3,
-	97,
-	97,
-	97,
-	100,
-	0,
-	3,
-	97,
-	98,
-	99,
-	// single_type_list          =>
-	100,
-	0,
-	16,
-	115,
-	105,
-	110,
-	103,
-	108,
-	101,
-	95,
-	116,
-	121,
-	112,
-	101,
-	95,
-	108,
-	105,
-	115,
-	116,
-	// [4, 5, 6]
-	107,
-	0,
-	3,
-	4,
-	5,
-	6,
-	// str =>                             =>    ["def"]
-	100,
-	0,
-	3,
-	115,
-	116,
-	114,
-	107,
-	0,
-	3,
-	100,
-	101,
-	102,
-	// value                   =>               123
-	100,
-	0,
-	5,
-	118,
-	97,
-	108,
-	117,
-	101,
-	97,
-	123,
-	// various_types_list       =>
-	100,
-	0,
-	18,
-	118,
-	97,
-	114,
-	105,
-	111,
-	117,
-	115,
-	95,
-	116,
-	121,
-	112,
-	101,
-	115,
-	95,
-	108,
-	105,
-	115,
-	116,
-	// {           7,                  "ghi",            3.1415926 }
-	104,
-	3,
-	97,
-	7,
-	107,
-	0,
-	3,
-	103,
-	104,
-	105,
-	70,
-	64,
-	9,
-	33,
-	251,
-	77,
-	18,
-	216,
-	74};
+	116, 0,   0,   0,   5,   
+		// aaa                          =>           abc
+		100, 0,   3,   97,  97,  97,  100, 0,   3,   97,  98,  99,  
+		// single_type_list          =>
+		100, 0,   16,	115, 105, 110, 103, 108, 101, 95,  116, 121, 112, 101, 95,  108, 105, 115, 116, 
+			// [4, 5, 6]
+			107, 0,   3,   4,   5,	6,   
+		// str =>                             =>    ["def"]
+		100, 0,   3,   115, 116, 114, 107, 0,   3,   100, 101, 102, 
+		// value                   =>               123
+		100, 0,   5,   118, 97,  108, 117, 101,	97,  123,
+		// various_types_list       =>
+		100, 0,   18,  118, 97,  114, 105, 111, 117, 115, 95,  116, 121, 112, 101, 115, 95,  108, 105, 115, 116,
+			// {           7,                  "ghi",            3.1415926 }
+			104, 3,   97,  7,   107, 0,   3,   103, 104, 105, 70,  64,  9,   33,  251, 77,  18,  216, 74};
 
 // 1
 [[maybe_unused]] constexpr std::array<std::uint8_t, 3> test_int{131, 97, 1};
@@ -159,6 +63,12 @@ struct Term
 // list: ["abc","def","ghi"]
 [[maybe_unused]] constexpr std::array<std::uint8_t, 25> test_list_str{
 	131, 108, 0, 0, 0, 3, 107, 0, 3, 97, 98, 99, 107, 0, 3, 100, 101, 102, 107, 0, 3, 103, 104, 105, 106};
+// tuple: {1,2,3,4,5,6}
+[[maybe_unused]] constexpr std::array<std::uint8_t, 15>
+	test_tuple_int{131, 104, 6, 97, 1, 97, 2, 97, 3, 97, 4, 97, 5, 97, 6};
+// tuple: {1,"abc",2.71828}
+[[maybe_unused]] constexpr std::array<std::uint8_t, 20> test_tuple{
+	131, 104, 3, 97, 1, 107, 0, 3, 97, 98, 99, 70, 64, 5, 191, 9, 149, 170, 247, 144};
 
 // JSON (not working because of atom type)
 [[maybe_unused]] constexpr std::string_view test_json{
@@ -185,6 +95,8 @@ int main(int, char **)
 	[[maybe_unused]] std::array<int, 5> arr;
 	[[maybe_unused]] std::vector<int> l;
 	[[maybe_unused]] std::vector<std::string> lstr;
+	[[maybe_unused]] std::tuple<int,int,int,int,int,int> tup6;
+	[[maybe_unused]] std::tuple<int,std::string,double> tup3;
 
 	[[maybe_unused]] glz::error_ctx x;
 	// x = glz::read_beve(t, test_beve);
@@ -194,8 +106,10 @@ int main(int, char **)
 	// x = erlterm::read_term(a, test_atom);
 	// x = erlterm::read_term(str, test_string);
 	// x = erlterm::read_term(l, test_list_as_items);
-	x = erlterm::read_term(lstr, test_list_str);
-	// x = erlterm::read_term(t, test_term);
+	// x = erlterm::read_term(lstr, test_list_str);
+	// x = erlterm::read_term(tup6, test_tuple_int);
+	// x = erlterm::read_term(tup3, test_tuple);
+	x = erlterm::read_term(t, test_term);
 	// x = erlterm::read_term(i, test_int);
 	// x = erlterm::read_term(real, test_double);
 	// x = glz::read_json(t, test_json);

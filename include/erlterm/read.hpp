@@ -3,9 +3,9 @@
 #include <glaze/core/read.hpp>
 #include <glaze/core/reflect.hpp>
 
-#include <erlterm/ei/ei.hpp>
 #include <erlterm/core/defs.hpp>
 #include <erlterm/core/reflect.hpp>
+#include <erlterm/ei/ei.hpp>
 
 namespace glz
 {
@@ -14,8 +14,10 @@ template <class T>
 concept erl_string_t =
 	detail::str_t<T> && !std::same_as<std::decay_t<T>, std::string_view> && resizable<T> && has_data<T>;
 
-
-consteval bool has_format(opts o, std::uint32_t format) { return o.format == format; }
+consteval bool has_format(opts o, std::uint32_t format)
+{
+	return o.format == format;
+}
 
 template <opts Opts, bool Padded = false>
 requires(has_format(Opts, ERLANG))
@@ -25,7 +27,7 @@ auto read_iterators(is_context auto && ctx, contiguous auto && buffer) noexcept
 
 	// decode version
 	erlterm::decode_version(ctx, s);
-	return std::pair{s,e};
+	return std::pair{s, e};
 }
 
 namespace detail
@@ -111,7 +113,7 @@ struct from<ERLANG, T> final
 	GLZ_ALWAYS_INLINE static void op(auto && value, Ctx && ctx, It0 && it, It1 && end) noexcept
 	{
 		GLZ_END_CHECK();
-		erlterm::decode_binary<Opts>(
+		erlterm::decode_sequence<Opts>(
 			std::forward<T>(value),
 			std::forward<Ctx>(ctx),
 			std::forward<It0>(it),
@@ -158,7 +160,7 @@ struct from<ERLANG, T> final
 	{
 		GLZ_END_CHECK();
 
-		erlterm::decode_string(
+		erlterm::decode_token(
 			std::forward<T>(value),
 			std::forward<Ctx>(ctx),
 			std::forward<It0>(it),
@@ -200,27 +202,6 @@ struct from<ERLANG, T> final
 		}
 
 		static constexpr auto N = reflect<T>::size;
-		static constexpr bit_array<N> all_fields = []
-		{
-			bit_array<N> arr{};
-			for (size_t i = 0; i < N; ++i)
-			{
-				arr[i] = true;
-			}
-			return arr;
-		}();
-
-		decltype(auto) fields = [&]() -> decltype(auto)
-		{
-			if constexpr (is_partial_read<T> || Opts.partial_read)
-			{
-				return bit_array<N>{};
-			}
-			else
-			{
-				return nullptr;
-			}
-		}();
 
 		std::size_t fields_count{0};
 		if (erlterm::is_map(tag)) [[likely]]
@@ -263,14 +244,6 @@ struct from<ERLANG, T> final
 
 		for (size_t i = 0; i < fields_count; ++i)
 		{
-			if constexpr (is_partial_read<T> || Opts.partial_read)
-			{
-				if ((all_fields & fields) == all_fields)
-				{
-					return;
-				}
-			}
-
 			if constexpr (N > 0)
 			{
 				static constexpr auto HashInfo = hash_info<T>;
@@ -283,30 +256,10 @@ struct from<ERLANG, T> final
 					return;
 				}
 
-				// for (size_t idx = 0; idx < HashInfo.table.size(); idx++)
-				// {
-				// 	if (HashInfo.table[idx] == N)
-				// 		continue;
-
-				// 	std::cerr << "idx: " << idx << ", V:" << static_cast<int>(HashInfo.table[idx]) << "\n";
-				// }
-
-				// const auto refkeys = ;
-				for (const auto & k: reflect<T>::keys)
-				{
-					std::cerr << "k: " << k.data() << ", sz: " << k.size() << "\n";
-				}
-
 				const auto n = mkey.size();
-				const auto index =
-					decode_hash_with_size<ERLANG, T, HashInfo, HashInfo.type>::op(mkey.data(), end, n);
+				const auto index = decode_hash_with_size<ERLANG, T, HashInfo, HashInfo.type>::op(mkey.data(), end, n);
 				if (index < N) [[likely]]
 				{
-					if constexpr (is_partial_read<T> || Opts.partial_read)
-					{
-						fields[index] = true;
-					}
-
 					const sv key{mkey.data(), n};
 
 					jump_table<N>(

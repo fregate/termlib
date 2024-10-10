@@ -8,13 +8,14 @@
 #include <glaze/core/common.hpp>
 #include <glaze/core/context.hpp>
 
+#include <erlterm/core/defs.hpp>
 #include <erlterm/ei/types.hpp>
 
 namespace erlterm
 {
 
-#define CHECK_OFFSET() \
-	if ((it + index) > end) [[unlikely]] \
+#define CHECK_OFFSET(off) \
+	if ((it + (off)) > end) [[unlikely]] \
 	{ \
 		ctx.error = glz::error_code::unexpected_end; \
 		return; \
@@ -36,7 +37,7 @@ void decode_number_impl(F && func, Ctx && ctx, It0 && it, It1 && end)
 		return;
 	}
 
-	CHECK_OFFSET();
+	CHECK_OFFSET(index);
 	std::advance(it, index);
 }
 
@@ -53,10 +54,7 @@ void decode_version(glz::is_context auto && ctx, It && it)
 		return;
 	}
 
-	std::cerr << "term version: " << version << "\n";
-
 	std::advance(it, index);
-	return;
 }
 
 template <class It>
@@ -175,7 +173,7 @@ void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
 }
 
 template <class It0, class It1>
-void decode_string(auto && value, glz::is_context auto && ctx, It0 && it, It1 && end)
+void decode_token(auto && value, glz::is_context auto && ctx, It0 && it, It1 && end)
 {
 	int index{};
 	int type{};
@@ -224,30 +222,21 @@ void decode_boolean(auto && value, Ctx && ctx, It0 && it, It1 && end)
 		return;
 	}
 
-	CHECK_OFFSET();
+	CHECK_OFFSET(index);
 	value = v != 0;
 	std::advance(it, index);
 }
 
-template <auto Opts, class T, class It0, class It1>
-void decode_binary(T && value, glz::is_context auto && ctx, It0 && it, It1 && end)
+template <auto Opts, class T, class It0>
+void decode_binary(T && value, std::size_t sz, glz::is_context auto && ctx, It0 && it, auto && end)
 {
-	using V = glz::range_value_t<std::decay_t<T>>;
-
-	int index{};
-	int type{};
-	int sz{};
-	if (ei_get_type(it, &index, &type, &sz) < 0)
-	{
-		ctx.error = glz::error_code::syntax_error;
-		return;
-	}
-
-	if ((it + sz) > end) [[unlikely]]
+	if ((it + sz * sizeof(std::uint8_t)) > end) [[unlikely]]
 	{
 		ctx.error = glz::error_code::unexpected_end;
 		return;
 	}
+
+	using V = glz::range_value_t<std::decay_t<T>>;
 
 	if constexpr (glz::resizable<T>)
 	{
@@ -259,13 +248,14 @@ void decode_binary(T && value, glz::is_context auto && ctx, It0 && it, It1 && en
 	}
 	else
 	{
-		if (static_cast<std::size_t>(sz) > value.size())
+		if (sz > value.size())
 		{
 			ctx.error = glz::error_code::syntax_error;
 			return;
 		}
 	}
 
+	int index{};
 	long szl{};
 	if constexpr (sizeof(V) == sizeof(std::uint8_t))
 	{
@@ -288,6 +278,97 @@ void decode_binary(T && value, glz::is_context auto && ctx, It0 && it, It1 && en
 	}
 
 	std::advance(it, index);
+}
+
+template <auto Opts, class T>
+void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && end)
+{
+	using V = glz::range_value_t<std::decay_t<T>>;
+
+	int index{};
+	int arity{};
+	if (ei_decode_list_header(it, &index, &arity) < 0)
+	{
+		ctx.error = glz::error_code::syntax_error;
+		return;
+	}
+
+	CHECK_OFFSET(index);
+
+	if constexpr (glz::resizable<T>)
+	{
+		value.resize(arity);
+		if constexpr (Opts.shrink_to_fit)
+		{
+			value.shrink_to_fit();
+		}
+	}
+	else
+	{
+		if (static_cast<std::size_t>(arity) > value.size())
+		{
+			ctx.error = glz::error_code::syntax_error;
+			return;
+		}
+	}
+
+	it += index;
+
+	for(int idx = 0; idx < arity; idx++)
+	{
+		V v;
+		glz::detail::from<glz::ERLANG, V>::template op<Opts>(v, ctx, it, end);
+		if (bool(ctx.error)) [[unlikely]]
+		{
+			return;
+		}
+
+		value[idx] = std::move(v);
+	}
+}
+
+template <auto Opts, class T, glz::is_context Ctx, class It0, class It1>
+void decode_sequence(T && value, Ctx && ctx, It0 && it, It1 && end)
+{
+	int index{};
+	int type{};
+	int sz{};
+	if (ei_get_type(it, &index, &type, &sz) < 0)
+	{
+		ctx.error = glz::error_code::syntax_error;
+		return;
+	}
+
+	if (is_binary(type))
+	{
+		decode_binary<Opts>(
+			std::forward<T>(value),
+			static_cast<std::size_t>(sz),
+			std::forward<Ctx>(ctx),
+			std::forward<It0>(it),
+			std::forward<It1>(end));
+	}
+	else if (is_list(type))
+	{
+		if (is_string(type))
+		{
+			std::string buff;
+			decode_token(buff, std::forward<Ctx>(ctx), std::forward<It0>(it), std::forward<It1>(end));
+			value.resize(buff.size());
+			std::copy(buff.begin(), buff.end(), value.begin());
+		}
+		else
+		{
+			decode_list<Opts>(
+				std::forward<T>(value),
+				std::forward<Ctx>(ctx),
+				std::forward<It0>(it),
+				std::forward<It1>(end));
+		}
+	}
+	else if (is_tuple(type))
+	{
+	}
 }
 
 template <class It>

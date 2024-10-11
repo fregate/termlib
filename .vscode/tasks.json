@@ -1,0 +1,38 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "CMake (Debug)",
+            "command": "cmake",
+            "args": [
+                "${workspaceFolder}",
+                "-G", "Ninja",
+                "-B", "${workspaceFolder}/../_build/${workspaceFolderBasename}",
+                "-DTERMLIB_BUILD_EXAMPLES=ON",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "dependsOn": [
+                "Remove patched glaze"
+            ],
+            "group": "build"
+        },
+        {
+            "type": "shell",
+            "label": "Remove patched glaze",
+            "command": "rm",
+            "args": [
+                "-rf",
+                "${workspaceFolder}/../_build/${workspaceFolderBasename}/_deps"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build"
+        },
+    ]
+}

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace glz
+namespace erlterm
 {
 
 inline constexpr std::uint32_t ERLANG = 20000;

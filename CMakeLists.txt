@@ -4,15 +4,15 @@ project(TermLib CXX)
 
 set(LIBRARY_NAME erlterm)
 
-add_library(${LIBRARY_NAME} STATIC)
+add_library(${LIBRARY_NAME} INTERFACE)
 
-target_compile_features(${LIBRARY_NAME} PUBLIC cxx_std_20)
+target_compile_features(${LIBRARY_NAME} INTERFACE cxx_std_20)
 
 set(PROJECT_TARGET_COMPILE_OPTIONS
 	-Werror -Wall -Wpedantic -Wextra
 )
 target_compile_options(${LIBRARY_NAME}
-	PRIVATE
+	INTERFACE
 		${PROJECT_TARGET_COMPILE_OPTIONS}
 )
 
@@ -44,26 +44,24 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glaze)
 
 target_include_directories(${LIBRARY_NAME}
-	PUBLIC
+	INTERFACE
 		include
 )
 
 target_sources(${LIBRARY_NAME}
 	PUBLIC
-		include/termlib/Exception.h
-		include/termlib/TermBuilder.h
-		include/termlib/TermParser.h
+		include/erlterm/core/defs.hpp
 
+		include/erlterm/ei/ei.hpp
+		include/erlterm/ei/read.hpp
+		include/erlterm/ei/types.hpp
+
+		include/erlterm/utils/cmp.hpp
 		include/erlterm/read.hpp
-
-	PRIVATE
-		src/Exception.cpp
-		src/TermBuilder.cpp
-		src/TermParser.cpp
 )
 
 target_link_libraries(${LIBRARY_NAME}
-	PUBLIC
+	INTERFACE
 		Erlang::EI
 		Erlang::Erlang
 

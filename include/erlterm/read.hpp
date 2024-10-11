@@ -11,7 +11,7 @@ namespace erlterm
 template <glz::read_term_supported T, class Buffer>
 [[nodiscard]] inline glz::error_ctx read_term(T && value, Buffer && buffer) noexcept
 {
-	return glz::read<glz::opts{.format = glz::ERLANG}>(value, std::forward<Buffer>(buffer));
+	return glz::read<glz::opts{.format = ERLANG}>(value, std::forward<Buffer>(buffer));
 }
 
 } // namespace erlterm

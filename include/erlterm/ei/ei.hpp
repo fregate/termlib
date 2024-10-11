@@ -317,7 +317,7 @@ void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && en
 	for (int idx = 0; idx < arity; idx++)
 	{
 		V v;
-		glz::detail::from<glz::ERLANG, V>::template op<Opts>(v, ctx, it, end);
+		glz::detail::from<ERLANG, V>::template op<Opts>(v, ctx, it, end);
 		if (bool(ctx.error)) [[unlikely]]
 		{
 			return;

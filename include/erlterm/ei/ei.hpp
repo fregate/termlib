@@ -41,6 +41,15 @@ void decode_number_impl(F && func, Ctx && ctx, It0 && it, It1 && end)
 	std::advance(it, index);
 }
 
+template <class F, glz::is_context Ctx, class B>
+void encode_number_impl(F && func, Ctx && ctx)
+{
+	if (func() < 0) [[unlikely]]
+	{
+		ctx.error = glz::error_code::seek_failure;
+	}
+}
+
 } // namespace detail
 
 template <class It>
@@ -402,5 +411,43 @@ auto decode_tuple_header(glz::is_context auto && ctx, It && it)
 
 	return std::pair<std::size_t, std::size_t>(static_cast<std::size_t>(arity), static_cast<std::size_t>(index));
 }
+
+void encode_boolean(const bool value, glz::is_context auto && ctx, ei_x_buff & buff)
+{
+	if (ei_x_encode_boolean(&buff, value ? 1 : 0) < 0)
+	{
+		ctx.error = glz::error_code::seek_failure;
+	}
+}
+
+template <class T>
+void encode_number(T && value, glz::is_context auto && ctx, ei_x_buff & buff);
+
+template <glz::detail::num_t T>
+requires(sizeof(T) > sizeof(long))
+void encode_number(T && value, glz::is_context auto && ctx, ei_x_buff & buff)
+{
+	if constexpr (std::is_signed_v<std::remove_cvref_t<T>>)
+	{
+		detail::encode_number_impl(std::bind(ei_x_encode_longlong, &buff, value), ctx);
+	}
+	else
+	{
+		detail::encode_number_impl(std::bind(ei_x_encode_ulonglong, &buff, value), ctx);
+	}
+}
+
+// template <glz::detail::num_t T>
+// void encode_number(T && value, glz::is_context auto && ctx, ei_x_buff & buff)
+// {
+// 	if constexpr (std::is_signed_v<std::remove_cvref_t<T>>)
+// 	{
+// 		detail::encode_number_impl(std::bind(ei_x_encode_long, &buff, value), ctx);
+// 	}
+// 	else
+// 	{
+// 		detail::encode_number_impl(std::bind(ei_x_encode_ulong, &buff, value), ctx);
+// 	}
+// }
 
 } // namespace erlterm

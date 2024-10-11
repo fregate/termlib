@@ -1,5 +1,5 @@
 diff --git a/include/glaze/core/opts.hpp b/include/glaze/core/opts.hpp
-index 0e31c10f..de001a4c 100644
+index 0e31c10..de76e4a 100644
 --- a/include/glaze/core/opts.hpp
 +++ b/include/glaze/core/opts.hpp
 @@ -126,24 +126,24 @@ namespace glz
@@ -35,27 +35,43 @@ index 0e31c10f..de001a4c 100644
  
     template <opts Opts>
     constexpr auto opening_handled()
-@@ -381,6 +381,9 @@ namespace glz
+@@ -361,6 +361,9 @@ namespace glz
+    template <class T>
+    concept read_csv_supported = requires { detail::from<CSV, std::remove_cvref_t<T>>{}; };
+ 
++   template <uint32_t Format, class T = void>
++   struct write_custom_format_supported;
++
+    template <uint32_t Format, class T>
+    consteval bool write_format_supported()
+    {
+@@ -377,10 +380,14 @@ namespace glz
+          return write_csv_supported<T>;
+       }
+       else {
+-         static_assert(false_v<T>, "Glaze metadata is probably needed for your type");
++         return write_custom_format_supported<Format, T>::value;
++         // static_assert(false_v<T>, "Glaze metadata is probably needed for your type");
        }
     }
  
 +   template <uint32_t Format, class T = void>
-+   struct is_custom_format_supported;
++   struct read_custom_format_supported;
 +
     template <uint32_t Format, class T>
     consteval bool read_format_supported()
     {
-@@ -397,7 +400,7 @@ namespace glz
+@@ -397,7 +404,7 @@ namespace glz
           return read_csv_supported<T>;
        }
        else {
 -         static_assert(false_v<T>, "Glaze metadata is probably needed for your type");
-+         return is_custom_format_supported<Format, T>::value;
++         return read_custom_format_supported<Format, T>::value;
        }
     }
  
 diff --git a/include/glaze/core/read.hpp b/include/glaze/core/read.hpp
-index 4cd6d6b1..3ab38048 100644
+index 4cd6d6b..3ab3804 100644
 --- a/include/glaze/core/read.hpp
 +++ b/include/glaze/core/read.hpp
 @@ -11,27 +11,36 @@

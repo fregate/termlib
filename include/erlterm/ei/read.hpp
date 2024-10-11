@@ -366,7 +366,7 @@ template <class T>
 concept read_term_supported = requires { detail::from<erlterm::ERLANG, std::remove_cvref_t<T>>{}; };
 
 template <class T>
-struct is_custom_format_supported<erlterm::ERLANG, T>
+struct read_custom_format_supported<erlterm::ERLANG, T>
 {
 	static const auto value = read_term_supported<T>;
 };

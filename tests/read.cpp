@@ -12,6 +12,9 @@ TEST(Read, EmptyBuffer)
 	const auto err = read_term(a, b);
 	EXPECT_NE(err.ec, glz::error_code::none);
 	EXPECT_EQ(err.ec, glz::error_code::no_read_input);
+
+	const auto ret = read_term<int>(b);
+	EXPECT_FALSE(ret);
 }
 
 }

@@ -23,7 +23,17 @@ option(TERMLIB_BUILD_EXAMPLES "Build examples" OFF)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+include(FetchContent)
+
 if(TERMLIB_BUILD_TESTS)
+	FetchContent_Declare(
+		erlis
+		GIT_REPOSITORY https://github.com/fregate/erlis.git
+		GIT_TAG v2.0.0
+		GIT_SHALLOW TRUE
+	)
+	FetchContent_MakeAvailable(erlis)
+
 	add_subdirectory(tests)
 endif(TERMLIB_BUILD_TESTS)
 
@@ -33,7 +43,6 @@ endif(TERMLIB_BUILD_EXAMPLES)
 
 find_package(Erlang REQUIRED)
 
-include(FetchContent)
 FetchContent_Declare(
 	glaze
 	GIT_REPOSITORY https://github.com/stephenberry/glaze.git

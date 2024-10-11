@@ -1,5 +1,8 @@
 #pragma once
 
+#include <glaze/beve/header.hpp>
+#include <glaze/core/reflect.hpp>
+
 #include <erlterm/core/defs.hpp>
 #include <erlterm/ei/ei.hpp>
 
@@ -34,7 +37,7 @@ template <>
 struct skip_value<erlterm::ERLANG>
 {
 	template <auto Opts>
-	inline static void op(is_context auto && /* ctx */, auto && /* it */, auto && /* end */) noexcept
+	GLZ_ALWAYS_INLINE static void op(is_context auto && /* ctx */, auto && /* it */, auto && /* end */) noexcept
 	{
 	}
 };
@@ -137,23 +140,23 @@ struct from<erlterm::ERLANG, T> final
 	}
 };
 
-template <class T>
-struct from<erlterm::ERLANG, T> final
-{
-	template <auto Opts, class Tag, is_context Ctx, class It0, class It1>
-	requires(has_no_header(Opts))
-	static void op(auto && /* value */, Tag && /* tag */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
-	{
-		std::cerr << "here\n";
-	}
+// template <class T>
+// struct from<erlterm::ERLANG, T> final
+// {
+// 	template <auto Opts, class Tag, is_context Ctx, class It0, class It1>
+// 	requires(has_no_header(Opts))
+// 	static void op(auto && /* value */, Tag && /* tag */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
+// 	{
+// 		std::cerr << "here\n";
+// 	}
 
-	template <auto Opts, is_context Ctx, class It0, class It1>
-	requires(not has_no_header(Opts))
-	static void op(auto && /* value */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
-	{
-		std::cerr << "here\n";
-	}
-};
+// 	template <auto Opts, is_context Ctx, class It0, class It1>
+// 	requires(not has_no_header(Opts))
+// 	static void op(auto && /* value */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
+// 	{
+// 		std::cerr << "here\n";
+// 	}
+// };
 
 template <class T>
 requires(tuple_t<T> || is_std_tuple<T>)

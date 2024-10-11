@@ -10,6 +10,7 @@
                 "-G", "Ninja",
                 "-B", "${workspaceFolder}/../_build/${workspaceFolderBasename}",
                 "-DTERMLIB_BUILD_EXAMPLES=ON",
+                "-DTERMLIB_BUILD_TESTS=ON",
                 "-DCMAKE_BUILD_TYPE=Debug",
                 "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
             ],

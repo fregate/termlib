@@ -62,6 +62,26 @@ struct to<erlterm::ERLANG, T> final
 	}
 };
 
+template <atom_t T>
+struct to<erlterm::ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class B>
+	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, B & b) noexcept
+	{
+		erlterm::encode_atom(std::forward<T>(value), std::forward<Ctx>(ctx), b);
+	}
+};
+
+template <erl_str_t T>
+struct to<erlterm::ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class B>
+	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, B & b) noexcept
+	{
+		erlterm::encode_string(std::forward<T>(value), std::forward<Ctx>(ctx), b);
+	}
+};
+
 template <class T>
 struct to<erlterm::ERLANG, T> final
 {

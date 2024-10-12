@@ -62,10 +62,10 @@
 [[maybe_unused]] constexpr std::array<std::uint8_t, 20> test_tuple{
 	131, 104, 3, 97, 1, 107, 0, 3, 97, 98, 99, 70, 64, 5, 191, 9, 149, 170, 247, 144};
 
-// JSON (not working because of atom type)
+// JSON
 [[maybe_unused]] constexpr std::string_view test_json{
 	R"({"value":123,"aaa":"abc","str":"def","single_type_list":[4,5,6],"various_types_list":[7,"ghi",3.1415926]})"};
-// BEVE (not working)
+// BEVE
 [[maybe_unused]] constexpr std::array<std::uint8_t, 117> test_beve{
 	3,   20,  20,  118, 97,  108, 117, 101, 73,  123, 0,   0,   0,   16,  97,  116, 111, 109, 2,   36,
 	115, 111, 109, 101, 95,  97,  116, 111, 109, 12,  115, 116, 114, 2,   44,  115, 111, 109, 101, 95,
@@ -88,21 +88,21 @@ int main(int, char **)
 	[[maybe_unused]] std::array<int, 5> arr;
 	[[maybe_unused]] std::vector<int> l;
 	[[maybe_unused]] std::vector<std::string> lstr;
-	[[maybe_unused]] std::tuple<int,int,int,int,int,int> tup6;
-	[[maybe_unused]] std::tuple<int,std::string,double> tup3;
+	[[maybe_unused]] std::tuple<int, int, int, int, int, int> tup6;
+	[[maybe_unused]] std::tuple<int, std::string, double> tup3;
 
 	[[maybe_unused]] glz::error_ctx x;
 	// x = glz::read_beve(t, test_beve);
 	// x = erlterm::read_term(bin, test_binary);
 	// x = erlterm::read_term(arr, test_binary);
 	// x = erlterm::read_term(b, test_bool);
-	x = erlterm::read_term(atm, test_atom);
+	// x = erlterm::read_term(atm, test_atom);
 	// x = erlterm::read_term(str, test_string);
 	// x = erlterm::read_term(l, test_list_as_items);
 	// x = erlterm::read_term(lstr, test_list_str);
 	// x = erlterm::read_term(tup6, test_tuple_int);
 	// x = erlterm::read_term(tup3, test_tuple);
-	// x = erlterm::read_term(t, test_term);
+	x = erlterm::read_term(t, test_term);
 	// x = erlterm::read_term(i, test_int);
 	// x = erlterm::read_term(real, test_double);
 	// x = glz::read_json(t, test_json);

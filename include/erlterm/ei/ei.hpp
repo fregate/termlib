@@ -57,7 +57,7 @@ void decode_version(glz::is_context auto && ctx, It && it)
 {
 	int index{};
 	int version{};
-	if (ei_decode_version(it, &index, &version) < 0)
+	if (ei_decode_version(it, &index, &version) < 0) [[unlikely]]
 	{
 		ctx.error = glz::error_code::syntax_error;
 		return;
@@ -181,40 +181,46 @@ void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
 	}
 }
 
+void decode_atom(auto && value, glz::is_context auto && ctx, auto && it, auto && end)
+{
+	int index{};
+	value.resize(MAXATOMLEN);
+	if (ei_decode_atom(it, &index, value.data()) < 0) [[unlikely]]
+	{
+		ctx.error = glz::error_code::syntax_error;
+		return;
+	}
+
+	value.shrink_to_fit();
+	CHECK_OFFSET(index);
+	std::advance(it, index);
+}
+
 template <class It0, class It1>
 void decode_token(auto && value, glz::is_context auto && ctx, It0 && it, It1 && end)
 {
 	int index{};
 	int type{};
 	int sz{};
-	if (ei_get_type(it, &index, &type, &sz) < 0)
+	if (ei_get_type(it, &index, &type, &sz) < 0) [[unlikely]]
 	{
 		ctx.error = glz::error_code::syntax_error;
 		return;
 	}
 
-	if ((it + sz) > end) [[unlikely]]
+	if (is_atom(type))
 	{
-		ctx.error = glz::error_code::unexpected_end;
+		decode_atom(value, ctx, it, end);
 		return;
 	}
 
+	CHECK_OFFSET(sz);
+
 	value.resize(sz);
-	if (is_atom(type))
+	if (ei_decode_string(it, &index, value.data()) < 0) [[unlikely]]
 	{
-		if (ei_decode_atom(it, &index, value.data()) < 0)
-		{
-			ctx.error = glz::error_code::syntax_error;
-			return;
-		}
-	}
-	else
-	{
-		if (ei_decode_string(it, &index, value.data()) < 0)
-		{
-			ctx.error = glz::error_code::syntax_error;
-			return;
-		}
+		ctx.error = glz::error_code::syntax_error;
+		return;
 	}
 
 	std::advance(it, index);
@@ -239,11 +245,7 @@ void decode_boolean(auto && value, Ctx && ctx, It0 && it, It1 && end)
 template <auto Opts, class T, class It0>
 void decode_binary(T && value, std::size_t sz, glz::is_context auto && ctx, It0 && it, auto && end)
 {
-	if ((it + sz * sizeof(std::uint8_t)) > end) [[unlikely]]
-	{
-		ctx.error = glz::error_code::unexpected_end;
-		return;
-	}
+	CHECK_OFFSET(sz * sizeof(std::uint8_t));
 
 	using V = glz::range_value_t<std::decay_t<T>>;
 
@@ -268,7 +270,7 @@ void decode_binary(T && value, std::size_t sz, glz::is_context auto && ctx, It0 
 	long szl{};
 	if constexpr (sizeof(V) == sizeof(std::uint8_t))
 	{
-		if (ei_decode_binary(it, &index, value.data(), &szl) < 0)
+		if (ei_decode_binary(it, &index, value.data(), &szl) < 0) [[unlikely]]
 		{
 			ctx.error = glz::error_code::syntax_error;
 			return;
@@ -277,7 +279,7 @@ void decode_binary(T && value, std::size_t sz, glz::is_context auto && ctx, It0 
 	else
 	{
 		std::vector<std::uint8_t> buff(sz);
-		if (ei_decode_binary(it, &index, buff.data(), &szl) < 0)
+		if (ei_decode_binary(it, &index, buff.data(), &szl) < 0) [[unlikely]]
 		{
 			ctx.error = glz::error_code::syntax_error;
 			return;
@@ -296,7 +298,7 @@ void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && en
 
 	int index{};
 	int arity{};
-	if (ei_decode_list_header(it, &index, &arity) < 0)
+	if (ei_decode_list_header(it, &index, &arity) < 0) [[unlikely]]
 	{
 		ctx.error = glz::error_code::syntax_error;
 		return;
@@ -344,7 +346,7 @@ void decode_sequence(T && value, Ctx && ctx, It0 && it, It1 && end)
 	int index{};
 	int type{};
 	int sz{};
-	if (ei_get_type(it, &index, &type, &sz) < 0)
+	if (ei_get_type(it, &index, &type, &sz) < 0) [[unlikely]]
 	{
 		ctx.error = glz::error_code::syntax_error;
 		return;
@@ -389,7 +391,7 @@ auto decode_map_header(glz::is_context auto && ctx, It && it)
 {
 	int arity{};
 	int index{};
-	if (ei_decode_map_header(it, &index, &arity) < 0)
+	if (ei_decode_map_header(it, &index, &arity) < 0) [[unlikely]]
 	{
 		ctx.error = glz::error_code::syntax_error;
 		return std::pair<std::size_t, std::size_t>(-1ull, -1ull);
@@ -403,7 +405,7 @@ auto decode_tuple_header(glz::is_context auto && ctx, It && it)
 {
 	int arity{};
 	int index{};
-	if (ei_decode_tuple_header(it, &index, &arity) < 0)
+	if (ei_decode_tuple_header(it, &index, &arity) < 0) [[unlikely]]
 	{
 		ctx.error = glz::error_code::syntax_error;
 		return std::pair<std::size_t, std::size_t>(-1ull, -1ull);
@@ -414,7 +416,7 @@ auto decode_tuple_header(glz::is_context auto && ctx, It && it)
 
 void encode_boolean(const bool value, glz::is_context auto && ctx, ei_x_buff & buff)
 {
-	if (ei_x_encode_boolean(&buff, value ? 1 : 0) < 0)
+	if (ei_x_encode_boolean(&buff, value ? 1 : 0) < 0) [[unlikely]]
 	{
 		ctx.error = glz::error_code::seek_failure;
 	}
@@ -449,6 +451,22 @@ void encode_number(T && value, glz::is_context auto && ctx, ei_x_buff & buff)
 		{
 			detail::encode_number_impl(std::bind(ei_x_encode_ulong, &buff, value), ctx);
 		}
+	}
+}
+
+void encode_atom(auto && value, glz::is_context auto && ctx, ei_x_buff & buff)
+{
+	if (ei_x_encode_atom(&buff, value.data()) < 0) [[unlikely]]
+	{
+		ctx.error = glz::error_code::seek_failure;
+	}
+}
+
+void encode_string(auto && value, glz::is_context auto && ctx, ei_x_buff & buff)
+{
+	if (ei_x_encode_string(&buff, value.data()) < 0) [[unlikely]]
+	{
+		ctx.error = glz::error_code::seek_failure;
 	}
 }
 

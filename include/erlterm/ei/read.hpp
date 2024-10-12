@@ -10,13 +10,6 @@
 namespace glz
 {
 
-template <class T>
-concept erl_string_t =
-	detail::str_t<T> && !std::same_as<std::decay_t<T>, std::string_view> && resizable<T> && has_data<T>;
-
-template <class T>
-concept atom_t = erl_string_t<T> && std::same_as<typename T::tag, erlterm::tag_atom>;
-
 consteval bool has_format(opts o, std::uint32_t format)
 {
 	return o.format == format;
@@ -136,6 +129,7 @@ struct from<erlterm::ERLANG, T> final
 	{
 		GLZ_END_CHECK();
 
+		// TODO make decode_atom
 		erlterm::decode_token(
 			std::forward<T>(value),
 			std::forward<Ctx>(ctx),
@@ -144,7 +138,7 @@ struct from<erlterm::ERLANG, T> final
 	}
 };
 
-template <erl_string_t T>
+template <erl_str_t T>
 struct from<erlterm::ERLANG, T> final
 {
 	template <auto Opts, is_context Ctx, class It0, class It1>
@@ -274,8 +268,8 @@ struct from<erlterm::ERLANG, T> final
 				static constexpr auto HashInfo = hash_info<T>;
 
 				// TODO this is only for erlmap + atom keys
-				std::string mkey;
-				from<erlterm::ERLANG, std::string>::op<Opts>(mkey, ctx, it, end);
+				erlterm::atom mkey;
+				from<erlterm::ERLANG, erlterm::atom>::op<Opts>(mkey, ctx, it, end);
 				if (bool(ctx.error)) [[unlikely]]
 				{
 					return;

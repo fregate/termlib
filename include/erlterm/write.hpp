@@ -56,7 +56,7 @@ template <num_t T>
 struct to<erlterm::ERLANG, T> final
 {
 	template <auto Opts, is_context Ctx, class B>
-	GLZ_ALWAYS_INLINE static void op(auto && value, Ctx && ctx, B & b) noexcept
+	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, B & b) noexcept
 	{
 		erlterm::encode_number(std::forward<T>(value), std::forward<Ctx>(ctx), b);
 	}

@@ -4,6 +4,7 @@
 #include <glaze/core/reflect.hpp>
 
 #include <erlterm/core/defs.hpp>
+#include <erlterm/core/types.hpp>
 #include <erlterm/ei/ei.hpp>
 
 namespace glz
@@ -12,6 +13,9 @@ namespace glz
 template <class T>
 concept erl_string_t =
 	detail::str_t<T> && !std::same_as<std::decay_t<T>, std::string_view> && resizable<T> && has_data<T>;
+
+template <class T>
+concept atom_t = erl_string_t<T> && std::same_as<typename T::tag, erlterm::tag_atom>;
 
 consteval bool has_format(opts o, std::uint32_t format)
 {
@@ -124,7 +128,7 @@ struct from<erlterm::ERLANG, T> final
 	}
 };
 
-template <erl_string_t T>
+template <atom_t T>
 struct from<erlterm::ERLANG, T> final
 {
 	template <auto Opts, is_context Ctx, class It0, class It1>
@@ -140,23 +144,21 @@ struct from<erlterm::ERLANG, T> final
 	}
 };
 
-// template <class T>
-// struct from<erlterm::ERLANG, T> final
-// {
-// 	template <auto Opts, class Tag, is_context Ctx, class It0, class It1>
-// 	requires(has_no_header(Opts))
-// 	static void op(auto && /* value */, Tag && /* tag */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
-// 	{
-// 		std::cerr << "here\n";
-// 	}
+template <erl_string_t T>
+struct from<erlterm::ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class It0, class It1>
+	GLZ_ALWAYS_INLINE static void op(auto && value, Ctx && ctx, It0 && it, It1 && end) noexcept
+	{
+		GLZ_END_CHECK();
 
-// 	template <auto Opts, is_context Ctx, class It0, class It1>
-// 	requires(not has_no_header(Opts))
-// 	static void op(auto && /* value */, Ctx && /* ctx */, It0 && /* it */, It1 && /* end */) noexcept
-// 	{
-// 		std::cerr << "here\n";
-// 	}
-// };
+		erlterm::decode_token(
+			std::forward<T>(value),
+			std::forward<Ctx>(ctx),
+			std::forward<It0>(it),
+			std::forward<It1>(end));
+	}
+};
 
 template <class T>
 requires(tuple_t<T> || is_std_tuple<T>)

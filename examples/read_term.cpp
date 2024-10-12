@@ -82,6 +82,7 @@ int main(int, char **)
 	[[maybe_unused]] double real;
 	[[maybe_unused]] std::string str;
 	[[maybe_unused]] std::string a;
+	[[maybe_unused]] erlterm::atom atm;
 	[[maybe_unused]] bool b;
 	[[maybe_unused]] std::vector<char> bin;
 	[[maybe_unused]] std::array<int, 5> arr;
@@ -95,13 +96,13 @@ int main(int, char **)
 	// x = erlterm::read_term(bin, test_binary);
 	// x = erlterm::read_term(arr, test_binary);
 	// x = erlterm::read_term(b, test_bool);
-	// x = erlterm::read_term(a, test_atom);
+	x = erlterm::read_term(atm, test_atom);
 	// x = erlterm::read_term(str, test_string);
 	// x = erlterm::read_term(l, test_list_as_items);
 	// x = erlterm::read_term(lstr, test_list_str);
 	// x = erlterm::read_term(tup6, test_tuple_int);
 	// x = erlterm::read_term(tup3, test_tuple);
-	x = erlterm::read_term(t, test_term);
+	// x = erlterm::read_term(t, test_term);
 	// x = erlterm::read_term(i, test_int);
 	// x = erlterm::read_term(real, test_double);
 	// x = glz::read_json(t, test_json);

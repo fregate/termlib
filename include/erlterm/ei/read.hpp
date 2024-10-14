@@ -60,7 +60,10 @@ struct read<erlterm::ERLANG>
 			else
 			{
 				// do not read anything into the const value
-				skip_value<erlterm::ERLANG>::op<Opts>(std::forward<Ctx>(ctx), std::forward<It0>(it), std::forward<It1>(end));
+				skip_value<erlterm::ERLANG>::op<Opts>(
+					std::forward<Ctx>(ctx),
+					std::forward<It0>(it),
+					std::forward<It1>(end));
 			}
 		}
 		else
@@ -274,7 +277,8 @@ struct from<erlterm::ERLANG, T> final
 				}
 
 				const auto n = mkey.size();
-				const auto index = decode_hash_with_size<erlterm::ERLANG, T, HashInfo, HashInfo.type>::op(mkey.data(), end, n);
+				const auto index =
+					decode_hash_with_size<erlterm::ERLANG, T, HashInfo, HashInfo.type>::op(mkey.data(), end, n);
 				if (index < N) [[likely]]
 				{
 					const sv key{mkey.data(), n};
@@ -296,7 +300,11 @@ struct from<erlterm::ERLANG, T> final
 								}
 								else
 								{
-									read<erlterm::ERLANG>::op<Opts>(get_member(value, get<I>(reflect<T>::values)), ctx, it, end);
+									read<erlterm::ERLANG>::op<Opts>(
+										get_member(value, get<I>(reflect<T>::values)),
+										ctx,
+										it,
+										end);
 								}
 							}
 							else

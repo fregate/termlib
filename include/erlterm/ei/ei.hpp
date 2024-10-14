@@ -41,13 +41,35 @@ void decode_number_impl(F && func, Ctx && ctx, It0 && it, It1 && end)
 	std::advance(it, index);
 }
 
-template <class F, glz::is_context Ctx>
-void encode_number_impl(F && func, Ctx && ctx)
+template <glz::output_buffer B, class IX>
+[[nodiscard]] GLZ_ALWAYS_INLINE int resize_buffer(B && b, IX && ix, int index)
 {
-	if (func() < 0) [[unlikely]]
+	if (b.size() < static_cast<std::size_t>(index))
+	{
+		b.resize(index);
+	}
+
+	return static_cast<int>(ix);
+}
+
+template <class F, glz::is_context Ctx, class B, class IX>
+GLZ_ALWAYS_INLINE void encode_impl(F && func, Ctx && ctx, B && b, IX && ix)
+{
+	int index{static_cast<int>(ix)};
+	if (func(nullptr, &index) < 0)
 	{
 		ctx.error = glz::error_code::seek_failure;
+		return;
 	}
+
+	index = resize_buffer(b, ix, index);
+	if (func(b.data(), &index) < 0)
+	{
+		ctx.error = glz::error_code::seek_failure;
+		return;
+	}
+
+	ix = index;
 }
 
 } // namespace detail
@@ -414,60 +436,79 @@ auto decode_tuple_header(glz::is_context auto && ctx, It && it)
 	return std::pair<std::size_t, std::size_t>(static_cast<std::size_t>(arity), static_cast<std::size_t>(index));
 }
 
-void encode_boolean(const bool value, glz::is_context auto && ctx, ei_x_buff & buff)
+template <class B, class IX>
+void encode_version(glz::is_context auto && ctx, B && b, IX && ix)
 {
-	if (ei_x_encode_boolean(&buff, value ? 1 : 0) < 0) [[unlikely]]
+	int index{static_cast<int>(ix)};
+	if (ei_encode_version(b.data(), &index) < 0) [[unlikely]]
 	{
-		ctx.error = glz::error_code::seek_failure;
+		ctx.error = glz::error_code::unexpected_end;
+		return;
 	}
+
+	ix = index;
 }
 
-template <class T>
-void encode_number(T && value, glz::is_context auto && ctx, ei_x_buff & buff)
+template <class... Args>
+void encode_boolean(const bool value, Args &&... args)
 {
+	using namespace std::placeholders;
+	detail::encode_impl(std::bind(ei_encode_boolean, _1, _2, value), std::forward<Args>(args)...);
+}
+
+template <class T, class... Args>
+void encode_number(T && value, Args &&... args)
+{
+	using namespace std::placeholders;
+
 	using V = std::remove_cvref_t<T>;
 	if constexpr (detail::float_t<V>)
 	{
-		detail::encode_number_impl(std::bind(ei_x_encode_double, &buff, value), ctx);
+		detail::encode_impl(std::bind(ei_encode_double, _1, _2, value), std::forward<Args>(args)...);
 	}
 	else if constexpr (sizeof(T) > sizeof(long))
 	{
 		if constexpr (std::is_signed_v<V>)
 		{
-			detail::encode_number_impl(std::bind(ei_x_encode_longlong, &buff, value), ctx);
+			detail::encode_impl(std::bind(ei_encode_longlong, _1, _2, value), std::forward<Args>(args)...);
 		}
 		else
 		{
-			detail::encode_number_impl(std::bind(ei_x_encode_ulonglong, &buff, value), ctx);
+			detail::encode_impl(std::bind(ei_encode_ulonglong, _1, _2, value), std::forward<Args>(args)...);
 		}
 	}
 	else
 	{
 		if constexpr (std::is_signed_v<V>)
 		{
-			detail::encode_number_impl(std::bind(ei_x_encode_long, &buff, value), ctx);
+			detail::encode_impl(std::bind(ei_encode_long, _1, _2, value), std::forward<Args>(args)...);
 		}
 		else
 		{
-			detail::encode_number_impl(std::bind(ei_x_encode_ulong, &buff, value), ctx);
+			detail::encode_impl(std::bind(ei_encode_ulong, _1, _2, value), std::forward<Args>(args)...);
 		}
 	}
 }
 
-void encode_atom(auto && value, glz::is_context auto && ctx, ei_x_buff & buff)
+template <class... Args>
+void encode_atom(auto && value, Args&&... args)
 {
-	if (ei_x_encode_atom(&buff, value.data()) < 0) [[unlikely]]
-	{
-		ctx.error = glz::error_code::seek_failure;
-	}
+	using namespace std::placeholders;
+	detail::encode_impl(std::bind(ei_encode_atom, _1, _2, value.data()), std::forward<Args>(args)...);
 }
 
-void encode_string(auto && value, glz::is_context auto && ctx, ei_x_buff & buff)
+template <class... Args>
+void encode_string(auto && value, Args&&... args)
 {
-	if (ei_x_encode_string(&buff, value.data()) < 0) [[unlikely]]
-	{
-		ctx.error = glz::error_code::seek_failure;
-	}
+	using namespace std::placeholders;
+	detail::encode_impl(std::bind(ei_encode_string, _1, _2, value.data()), std::forward<Args>(args)...);
+}
+
+template <class... Args>
+void encode_tuple_header(int arity, Args&&... args)
+{
+	using namespace std::placeholders;
+	detail::encode_impl(std::bind(ei_encode_tuple_header, _1, _2, arity), std::forward<Args>(args)...);
 }
 
 } // namespace erlterm

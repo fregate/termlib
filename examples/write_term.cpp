@@ -25,7 +25,8 @@ int main(int, char**)
 	// err = erlterm::write_term(std::int16_t{2}, buff);
 	// err = erlterm::write_term(3.1415926, buff);
 	// err = erlterm::write_term("abc"_estr, buff);
-	err = erlterm::write_term("qwe"_atom, buff);
+	// err = erlterm::write_term("qwe"_atom, buff);
+	err = erlterm::write_term(std::make_tuple(1,2,3,"qwe"_atom), buff);
 
 	std::cerr << "<<";
 	for (auto c : buff)

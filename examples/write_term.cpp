@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <cstdint>
+#include <vector>
+#include <map>
 
 #include <glaze/beve/write.hpp>
 #include <glaze/json/write.hpp>
@@ -27,7 +29,8 @@ int main(int, char**)
 	// err = erlterm::write_term("abc"_estr, buff);
 	// err = erlterm::write_term("qwe"_atom, buff);
 	// err = erlterm::write_term(std::make_tuple(1,2,3,"qwe"_atom), buff);
-	err = erlterm::write_term(std::vector<std::uint64_t>{1,2,3,std::numeric_limits<std::uint64_t>::max()}, buff);
+	// err = erlterm::write_term(std::vector<std::uint64_t>{1,2,3,std::numeric_limits<std::uint64_t>::max()}, buff);
+	err = erlterm::write_term(std::map<erlterm::atom, int>{{"a"_atom, 1}, {"b"_atom, 2}}, buff);
 
 	std::cerr << "<<";
 	for (auto c : buff)

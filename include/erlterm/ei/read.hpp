@@ -205,8 +205,7 @@ struct from<erlterm::ERLANG, T> final
 	}
 };
 
-template <class T>
-requires(reflectable<T>)
+template <reflectable T>
 struct from<erlterm::ERLANG, T> final
 {
 	template <auto Opts, is_context Ctx, class It0, class It1>

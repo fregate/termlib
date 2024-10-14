@@ -25,8 +25,9 @@ struct write<erlterm::ERLANG>
 	requires(has_no_header(Opts))
 	GLZ_ALWAYS_INLINE static void op(T && value, Args &&... args) noexcept
 	{
-		using V = std::remove_cvref_t<T>;
-		to<erlterm::ERLANG, V>::template op<Opts>(std::forward<V>(value), std::forward<Args>(args)...);
+		to<erlterm::ERLANG, std::remove_cvref_t<T>>::template op<Opts>(
+			std::forward<T>(value),
+			std::forward<Args>(args)...);
 	}
 
 	template <auto Opts, class T, is_context Ctx, output_buffer B, class IX>
@@ -62,7 +63,7 @@ template <num_t T>
 struct to<erlterm::ERLANG, T> final
 {
 	template <auto Opts, class... Args>
-	GLZ_ALWAYS_INLINE static void op(T && value, Args &&... args) noexcept
+	GLZ_ALWAYS_INLINE static void op(auto && value, Args &&... args) noexcept
 	{
 		erlterm::encode_number(value, std::forward<Args>(args)...);
 	}
@@ -72,9 +73,9 @@ template <atom_t T>
 struct to<erlterm::ERLANG, T> final
 {
 	template <auto Opts, class... Args>
-	GLZ_ALWAYS_INLINE static void op(T && value, Args &&... args) noexcept
+	GLZ_ALWAYS_INLINE static void op(auto && value, Args &&... args) noexcept
 	{
-		erlterm::encode_atom(std::forward<T>(value), std::forward<Args>(args)...);
+		erlterm::encode_atom(value, std::forward<Args>(args)...);
 	}
 };
 
@@ -82,9 +83,9 @@ template <erl_str_t T>
 struct to<erlterm::ERLANG, T> final
 {
 	template <auto Opts, class... Args>
-	GLZ_ALWAYS_INLINE static void op(T && value, Args &&... args) noexcept
+	GLZ_ALWAYS_INLINE static void op(auto && value, Args &&... args) noexcept
 	{
-		erlterm::encode_string(std::forward<T>(value), std::forward<Args>(args)...);
+		erlterm::encode_string(value, std::forward<Args>(args)...);
 	}
 };
 
@@ -93,7 +94,7 @@ requires(tuple_t<T> || is_std_tuple<T>)
 struct to<erlterm::ERLANG, T> final
 {
 	template <auto Opts, is_context Ctx, class... Args>
-	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, Args &&... args) noexcept
+	GLZ_ALWAYS_INLINE static void op(auto && value, Ctx && ctx, Args &&... args) noexcept
 	{
 		static constexpr auto N = glz::tuple_size_v<T>;
 
@@ -120,7 +121,7 @@ struct to<erlterm::ERLANG, T> final
 	}
 };
 
-template <readable_array_t T>
+template <writable_array_t T>
 struct to<erlterm::ERLANG, T> final
 {
 	template <auto Opts, is_context Ctx, class... Args>
@@ -141,6 +142,37 @@ struct to<erlterm::ERLANG, T> final
 		erlterm::encode_list_tail(ctx, std::forward<Args>(args)...);
 	}
 };
+
+template <writable_map_t T>
+struct to<erlterm::ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class... Args>
+	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, Args &&... args) noexcept
+	{
+		const auto n = value.size();
+		erlterm::encode_map_header(n, ctx, std::forward<Args>(args)...);
+		if (bool(ctx.error)) [[unlikely]]
+		{
+			return;
+		}
+
+		for (auto && [k, v] : value)
+		{
+			write<erlterm::ERLANG>::op<Opts>(k, ctx, args...);
+			write<erlterm::ERLANG>::op<Opts>(v, ctx, args...);
+		}
+	}
+};
+
+// template <reflectable T>
+// struct to<erlterm::ERLANG, T> final
+// {
+// 	template <auto Opts, is_context Ctx, class... Args>
+// 	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, Args &&... args) noexcept
+// 	{
+// 		static constexpr auto N = reflect<T>::size;
+// 	}
+// };
 
 template <class T>
 struct to<erlterm::ERLANG, T> final

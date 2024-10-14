@@ -46,7 +46,7 @@ template <glz::output_buffer B, class IX>
 {
 	if (b.size() < static_cast<std::size_t>(index))
 	{
-		b.resize(index);
+		b.resize((std::max)(b.size() * 2, static_cast<std::size_t>(index)));
 	}
 
 	return static_cast<int>(ix);
@@ -523,6 +523,13 @@ void encode_list_tail(Args&&... args)
 {
 	using namespace std::placeholders;
 	detail::encode_impl(std::bind(ei_encode_list_header, _1, _2, 0), std::forward<Args>(args)...);
+}
+
+template <class... Args>
+void encode_map_header(std::size_t arity, Args&&... args)
+{
+	using namespace std::placeholders;
+	detail::encode_impl(std::bind(ei_encode_map_header, _1, _2, static_cast<int>(arity)), std::forward<Args>(args)...);
 }
 
 } // namespace erlterm

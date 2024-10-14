@@ -511,4 +511,18 @@ void encode_tuple_header(int arity, Args&&... args)
 	detail::encode_impl(std::bind(ei_encode_tuple_header, _1, _2, arity), std::forward<Args>(args)...);
 }
 
+template <class... Args>
+void encode_list_header(std::size_t arity, Args&&... args)
+{
+	using namespace std::placeholders;
+	detail::encode_impl(std::bind(ei_encode_list_header, _1, _2, static_cast<int>(arity)), std::forward<Args>(args)...);
+}
+
+template <class... Args>
+void encode_list_tail(Args&&... args)
+{
+	using namespace std::placeholders;
+	detail::encode_impl(std::bind(ei_encode_list_header, _1, _2, 0), std::forward<Args>(args)...);
+}
+
 } // namespace erlterm

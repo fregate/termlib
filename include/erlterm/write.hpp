@@ -120,14 +120,36 @@ struct to<erlterm::ERLANG, T> final
 	}
 };
 
+template <readable_array_t T>
+struct to<erlterm::ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class... Args>
+	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, Args &&... args) noexcept
+	{
+		const auto n = value.size();
+		erlterm::encode_list_header(n, ctx, std::forward<Args>(args)...);
+		if (bool(ctx.error)) [[unlikely]]
+		{
+			return;
+		}
+
+		for (auto & i : value)
+		{
+			write<erlterm::ERLANG>::op<Opts>(i, ctx, args...);
+		}
+
+		erlterm::encode_list_tail(ctx, std::forward<Args>(args)...);
+	}
+};
+
 template <class T>
 struct to<erlterm::ERLANG, T> final
 {
-	template <auto Opts, is_context Ctx, output_buffer B>
-	GLZ_ALWAYS_INLINE static void op(T && /* value */, Ctx && /* ctx */, B && /* b */) noexcept
-	{
-		// std::cerr << "here\n";
-	}
+	// template <auto Opts, is_context Ctx, output_buffer B>
+	// GLZ_ALWAYS_INLINE static void op(T && /* value */, Ctx && /* ctx */, B && /* b */) noexcept
+	// {
+	// 	// std::cerr << "here\n";
+	// }
 };
 
 } // namespace detail

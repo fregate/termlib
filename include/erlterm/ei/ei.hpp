@@ -28,10 +28,10 @@ template <class T>
 concept float_t = std::floating_point<std::remove_cvref_t<T>>;
 
 template <class F, glz::is_context Ctx, class It0, class It1>
-void decode_number_impl(F && func, Ctx && ctx, It0 && it, It1 && end)
+GLZ_ALWAYS_INLINE void decode_impl(F && func, Ctx && ctx, It0 && it, It1 && end)
 {
 	int index{};
-	if (func(&index) < 0) [[unlikely]]
+	if (func(it, &index) < 0) [[unlikely]]
 	{
 		ctx.error = glz::error_code::parse_number_failure;
 		return;
@@ -75,7 +75,7 @@ GLZ_ALWAYS_INLINE void encode_impl(F && func, Ctx && ctx, B && b, IX && ix)
 } // namespace detail
 
 template <class It>
-void decode_version(glz::is_context auto && ctx, It && it)
+GLZ_ALWAYS_INLINE void decode_version(glz::is_context auto && ctx, It && it)
 {
 	int index{};
 	int version{};
@@ -89,7 +89,7 @@ void decode_version(glz::is_context auto && ctx, It && it)
 }
 
 template <class It>
-int get_type(glz::is_context auto && ctx, It && it)
+GLZ_ALWAYS_INLINE int get_type(glz::is_context auto && ctx, It && it)
 {
 	int type{};
 	int size{};
@@ -116,111 +116,67 @@ auto skip_term(glz::is_context auto && ctx, It && it)
 	return it + index;
 }
 
-template <class It>
-auto term_size(glz::is_context auto && ctx, It && it)
-{
-	int index{0};
-	if (ei_skip_term(it, &index) < 0)
-	{
-		ctx.error = glz::error_code::syntax_error;
-		index = 0;
-	}
-
-	return static_cast<std::size_t>(index);
-}
-
-template <class T, glz::is_context Ctx, class It0, class It1>
-void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end);
-
-template <detail::float_t T, glz::is_context Ctx, class It0, class It1>
-void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
+template <glz::detail::num_t T, class... Args>
+GLZ_ALWAYS_INLINE void decode_number(T && value, Args &&... args)
 {
 	using namespace std::placeholders;
-
-	double v;
-	detail::decode_number_impl(
-		std::bind(ei_decode_double, it, _1, &v),
-		std::forward<Ctx>(ctx),
-		std::forward<It0>(it),
-		std::forward<It1>(end));
-	value = static_cast<std::remove_cvref_t<T>>(v);
-}
-
-template <class T, glz::is_context Ctx, class It0, class It1>
-requires(glz::detail::num_t<T> && sizeof(T) > sizeof(long))
-void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
-{
-	using namespace std::placeholders;
-
 	using V = std::remove_cvref_t<T>;
-	if constexpr (std::is_signed_v<V>)
+	if constexpr (detail::float_t<T>)
 	{
-		long long v;
-		detail::decode_number_impl(
-			std::bind(ei_decode_longlong, it, _1, &v),
-			std::forward<Ctx>(ctx),
-			std::forward<It0>(it),
-			std::forward<It1>(end));
-		value = static_cast<T>(v);
+		double v;
+		detail::decode_impl(std::bind(ei_decode_double, _1, _2, &v), std::forward<Args>(args)...);
+		value = static_cast<std::remove_cvref_t<T>>(v);
 	}
 	else
 	{
-		unsigned long long v;
-		detail::decode_number_impl(
-			std::bind(ei_decode_ulonglong, it, _1, &v),
-			std::forward<Ctx>(ctx),
-			std::forward<It0>(it),
-			std::forward<It1>(end));
-		value = static_cast<T>(v);
+		if constexpr (sizeof(V) > sizeof(long))
+		{
+			if constexpr (std::is_signed_v<V>)
+			{
+				long long v;
+				detail::decode_impl(std::bind(ei_decode_longlong, _1, _2, &v), std::forward<Args>(args)...);
+				value = static_cast<T>(v);
+			}
+			else
+			{
+				unsigned long long v;
+				detail::decode_impl(std::bind(ei_decode_ulonglong, _1, _2, &v), std::forward<Args>(args)...);
+				value = static_cast<T>(v);
+			}
+		}
+		else
+		{
+			if constexpr (std::is_signed_v<V>)
+			{
+				long v;
+				detail::decode_impl(std::bind(ei_decode_long, _1, _2, &v), std::forward<Args>(args)...);
+				value = static_cast<T>(v);
+			}
+			else
+			{
+				unsigned long v;
+				detail::decode_impl(std::bind(ei_decode_ulong, _1, _2, &v), std::forward<Args>(args)...);
+				value = static_cast<T>(v);
+			}
+		}
 	}
 }
 
-template <glz::detail::num_t T, glz::is_context Ctx, class It0, class It1>
-void decode_number(T && value, Ctx && ctx, It0 && it, It1 && end)
+template <class... Args>
+GLZ_ALWAYS_INLINE void decode_atom(auto && value, Args &&... args)
 {
 	using namespace std::placeholders;
 
-	using V = std::remove_cvref_t<T>;
-	if constexpr (std::is_signed_v<V>)
-	{
-		long v;
-		detail::decode_number_impl(
-			std::bind(ei_decode_long, it, _1, &v),
-			std::forward<Ctx>(ctx),
-			std::forward<It0>(it),
-			std::forward<It1>(end));
-		value = static_cast<T>(v);
-	}
-	else
-	{
-		unsigned long v;
-		detail::decode_number_impl(
-			std::bind(ei_decode_ulong, it, _1, &v),
-			std::forward<Ctx>(ctx),
-			std::forward<It0>(it),
-			std::forward<It1>(end));
-		value = static_cast<T>(v);
-	}
-}
-
-void decode_atom(auto && value, glz::is_context auto && ctx, auto && it, auto && end)
-{
-	int index{};
 	value.resize(MAXATOMLEN);
-	if (ei_decode_atom(it, &index, value.data()) < 0) [[unlikely]]
-	{
-		ctx.error = glz::error_code::syntax_error;
-		return;
-	}
-
+	detail::decode_impl(std::bind(ei_decode_atom, _1, _2, value.data()), std::forward<Args>(args)...);
 	value.shrink_to_fit();
-	CHECK_OFFSET(index);
-	std::advance(it, index);
 }
 
 template <class It0, class It1>
-void decode_token(auto && value, glz::is_context auto && ctx, It0 && it, It1 && end)
+GLZ_ALWAYS_INLINE void decode_token(auto && value, glz::is_context auto && ctx, It0 && it, It1 && end)
 {
+	using namespace std::placeholders;
+
 	int index{};
 	int type{};
 	int sz{};
@@ -239,34 +195,24 @@ void decode_token(auto && value, glz::is_context auto && ctx, It0 && it, It1 && 
 	CHECK_OFFSET(sz);
 
 	value.resize(sz);
-	if (ei_decode_string(it, &index, value.data()) < 0) [[unlikely]]
-	{
-		ctx.error = glz::error_code::syntax_error;
-		return;
-	}
-
-	std::advance(it, index);
+	detail::decode_impl(std::bind(ei_decode_string, _1, _2, value.data()), ctx, it, end);
 }
 
-template <glz::is_context Ctx, class It0, class It1>
-void decode_boolean(auto && value, Ctx && ctx, It0 && it, It1 && end)
+template <class... Args>
+GLZ_ALWAYS_INLINE void decode_boolean(auto && value, Args &&... args)
 {
-	int index{};
-	int v{};
-	if (ei_decode_boolean(it, &index, &v) < 0) [[unlikely]]
-	{
-		ctx.error = glz::error_code::parse_number_failure;
-		return;
-	}
+	using namespace std::placeholders;
 
-	CHECK_OFFSET(index);
+	int v{};
+	detail::decode_impl(std::bind(ei_decode_boolean, _1, _2, &v), std::forward<Args>(args)...);
 	value = v != 0;
-	std::advance(it, index);
 }
 
 template <auto Opts, class T, class It0>
 void decode_binary(T && value, std::size_t sz, glz::is_context auto && ctx, It0 && it, auto && end)
 {
+	using namespace std::placeholders;
+
 	CHECK_OFFSET(sz * sizeof(std::uint8_t));
 
 	using V = glz::range_value_t<std::decay_t<T>>;
@@ -288,33 +234,21 @@ void decode_binary(T && value, std::size_t sz, glz::is_context auto && ctx, It0 
 		}
 	}
 
-	int index{};
-	long szl{};
-	if constexpr (sizeof(V) == sizeof(std::uint8_t))
+	[[maybe_unused]] long szl{};
+	if constexpr (sizeof(V) == sizeof(std::uint8_t)) [[likely]]
 	{
-		if (ei_decode_binary(it, &index, value.data(), &szl) < 0) [[unlikely]]
-		{
-			ctx.error = glz::error_code::syntax_error;
-			return;
-		}
+		detail::decode_impl(std::bind(ei_decode_binary, _1, _2, value.data(), &szl), ctx, it, end);
 	}
 	else
 	{
 		std::vector<std::uint8_t> buff(sz);
-		if (ei_decode_binary(it, &index, buff.data(), &szl) < 0) [[unlikely]]
-		{
-			ctx.error = glz::error_code::syntax_error;
-			return;
-		}
-
+		detail::decode_impl(std::bind(ei_decode_binary, _1, _2, buff.data(), &szl), ctx, it, end);
 		std::copy(buff.begin(), buff.end(), value.begin());
 	}
-
-	std::advance(it, index);
 }
 
 template <auto Opts, class T>
-void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && end)
+GLZ_ALWAYS_INLINE void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && end)
 {
 	using V = glz::range_value_t<std::decay_t<T>>;
 
@@ -325,8 +259,6 @@ void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && en
 		ctx.error = glz::error_code::syntax_error;
 		return;
 	}
-
-	CHECK_OFFSET(index);
 
 	if constexpr (glz::resizable<T>)
 	{
@@ -345,7 +277,8 @@ void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && en
 		}
 	}
 
-	it += index;
+	CHECK_OFFSET(index);
+	std::advance(it, index);
 
 	for (int idx = 0; idx < arity; idx++)
 	{
@@ -363,7 +296,7 @@ void decode_list(T && value, glz::is_context auto && ctx, auto && it, auto && en
 }
 
 template <auto Opts, class T, glz::is_context Ctx, class It0, class It1>
-void decode_sequence(T && value, Ctx && ctx, It0 && it, It1 && end)
+GLZ_ALWAYS_INLINE void decode_sequence(T && value, Ctx && ctx, It0 && it, It1 && end)
 {
 	int index{};
 	int type{};
@@ -409,7 +342,7 @@ void decode_sequence(T && value, Ctx && ctx, It0 && it, It1 && end)
 }
 
 template <class It>
-auto decode_map_header(glz::is_context auto && ctx, It && it)
+GLZ_ALWAYS_INLINE auto decode_map_header(glz::is_context auto && ctx, It && it)
 {
 	int arity{};
 	int index{};
@@ -423,7 +356,7 @@ auto decode_map_header(glz::is_context auto && ctx, It && it)
 }
 
 template <class It>
-auto decode_tuple_header(glz::is_context auto && ctx, It && it)
+GLZ_ALWAYS_INLINE auto decode_tuple_header(glz::is_context auto && ctx, It && it)
 {
 	int arity{};
 	int index{};
@@ -437,7 +370,7 @@ auto decode_tuple_header(glz::is_context auto && ctx, It && it)
 }
 
 template <class B, class IX>
-void encode_version(glz::is_context auto && ctx, B && b, IX && ix)
+GLZ_ALWAYS_INLINE void encode_version(glz::is_context auto && ctx, B && b, IX && ix)
 {
 	int index{static_cast<int>(ix)};
 	if (ei_encode_version(b.data(), &index) < 0) [[unlikely]]
@@ -450,14 +383,14 @@ void encode_version(glz::is_context auto && ctx, B && b, IX && ix)
 }
 
 template <class... Args>
-void encode_boolean(const bool value, Args &&... args)
+GLZ_ALWAYS_INLINE void encode_boolean(const bool value, Args &&... args)
 {
 	using namespace std::placeholders;
 	detail::encode_impl(std::bind(ei_encode_boolean, _1, _2, value), std::forward<Args>(args)...);
 }
 
 template <class T, class... Args>
-void encode_number(T && value, Args &&... args)
+GLZ_ALWAYS_INLINE void encode_number(T && value, Args &&... args)
 {
 	using namespace std::placeholders;
 
@@ -491,14 +424,14 @@ void encode_number(T && value, Args &&... args)
 }
 
 template <class... Args>
-void encode_atom(auto && value, Args&&... args)
+GLZ_ALWAYS_INLINE void encode_atom(auto && value, Args &&... args)
 {
 	using namespace std::placeholders;
 	detail::encode_impl(std::bind(ei_encode_atom, _1, _2, value.data()), std::forward<Args>(args)...);
 }
 
 template <class... Args>
-void encode_atom_len(auto && value, std::size_t sz, Args&&... args)
+GLZ_ALWAYS_INLINE void encode_atom_len(auto && value, std::size_t sz, Args &&... args)
 {
 	using namespace std::placeholders;
 	detail::encode_impl(
@@ -507,35 +440,35 @@ void encode_atom_len(auto && value, std::size_t sz, Args&&... args)
 }
 
 template <class... Args>
-void encode_string(auto && value, Args&&... args)
+GLZ_ALWAYS_INLINE void encode_string(auto && value, Args &&... args)
 {
 	using namespace std::placeholders;
 	detail::encode_impl(std::bind(ei_encode_string, _1, _2, value.data()), std::forward<Args>(args)...);
 }
 
 template <class... Args>
-void encode_tuple_header(int arity, Args&&... args)
+GLZ_ALWAYS_INLINE void encode_tuple_header(int arity, Args &&... args)
 {
 	using namespace std::placeholders;
 	detail::encode_impl(std::bind(ei_encode_tuple_header, _1, _2, arity), std::forward<Args>(args)...);
 }
 
 template <class... Args>
-void encode_list_header(std::size_t arity, Args&&... args)
+GLZ_ALWAYS_INLINE void encode_list_header(std::size_t arity, Args &&... args)
 {
 	using namespace std::placeholders;
 	detail::encode_impl(std::bind(ei_encode_list_header, _1, _2, static_cast<int>(arity)), std::forward<Args>(args)...);
 }
 
 template <class... Args>
-void encode_list_tail(Args&&... args)
+GLZ_ALWAYS_INLINE void encode_list_tail(Args &&... args)
 {
 	using namespace std::placeholders;
 	detail::encode_impl(std::bind(ei_encode_list_header, _1, _2, 0), std::forward<Args>(args)...);
 }
 
 template <class... Args>
-void encode_map_header(std::size_t arity, Args&&... args)
+GLZ_ALWAYS_INLINE void encode_map_header(std::size_t arity, Args &&... args)
 {
 	using namespace std::placeholders;
 	detail::encode_impl(std::bind(ei_encode_map_header, _1, _2, static_cast<int>(arity)), std::forward<Args>(args)...);

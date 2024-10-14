@@ -65,8 +65,7 @@ struct read<erlterm::ERLANG>
 		}
 		else
 		{
-			using V = std::remove_cvref_t<T>;
-			from<erlterm::ERLANG, V>::template op<Opts>(
+			from<erlterm::ERLANG, std::remove_cvref_t<T>>::template op<Opts>(
 				std::forward<T>(value),
 				std::forward<Ctx>(ctx),
 				std::forward<It0>(it),

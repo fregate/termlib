@@ -498,6 +498,15 @@ void encode_atom(auto && value, Args&&... args)
 }
 
 template <class... Args>
+void encode_atom_len(auto && value, std::size_t sz, Args&&... args)
+{
+	using namespace std::placeholders;
+	detail::encode_impl(
+		std::bind(ei_encode_atom_len, _1, _2, value.data(), static_cast<int>(sz)),
+		std::forward<Args>(args)...);
+}
+
+template <class... Args>
 void encode_string(auto && value, Args&&... args)
 {
 	using namespace std::placeholders;

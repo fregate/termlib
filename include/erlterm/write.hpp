@@ -79,6 +79,17 @@ struct to<erlterm::ERLANG, T> final
 	}
 };
 
+// using for write reflectable map keys
+template <str_t T>
+struct to<erlterm::ERLANG, T> final
+{
+	template <auto Opts, class... Args>
+	GLZ_ALWAYS_INLINE static void op(auto && value, Args &&... args) noexcept
+	{
+		erlterm::encode_atom_len(value, value.size(), std::forward<Args>(args)...);
+	}
+};
+
 template <erl_str_t T>
 struct to<erlterm::ERLANG, T> final
 {
@@ -125,7 +136,7 @@ template <writable_array_t T>
 struct to<erlterm::ERLANG, T> final
 {
 	template <auto Opts, is_context Ctx, class... Args>
-	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, Args &&... args) noexcept
+	GLZ_ALWAYS_INLINE static void op(auto && value, Ctx && ctx, Args &&... args) noexcept
 	{
 		const auto n = value.size();
 		erlterm::encode_list_header(n, ctx, std::forward<Args>(args)...);
@@ -164,15 +175,62 @@ struct to<erlterm::ERLANG, T> final
 	}
 };
 
-// template <reflectable T>
-// struct to<erlterm::ERLANG, T> final
-// {
-// 	template <auto Opts, is_context Ctx, class... Args>
-// 	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, Args &&... args) noexcept
-// 	{
-// 		static constexpr auto N = reflect<T>::size;
-// 	}
-// };
+template <reflectable T>
+struct to<erlterm::ERLANG, T> final
+{
+	template <auto Opts, is_context Ctx, class... Args>
+	GLZ_ALWAYS_INLINE static void op(T && value, Ctx && ctx, Args &&... args) noexcept
+	{
+		static constexpr auto N = reflect<T>::size;
+		[[maybe_unused]] decltype(auto) t = [&]() -> decltype(auto)
+		{
+			if constexpr (reflectable<T>)
+			{
+				return to_tuple(value);
+			}
+			else
+			{
+				return nullptr;
+			}
+		}();
+
+		erlterm::encode_map_header(N, ctx, std::forward<Args>(args)...);
+		if (bool(ctx.error)) [[unlikely]]
+		{
+			return;
+		}
+
+		invoke_table<N>(
+			[&]<size_t I>()
+			{
+				// using val_t = std::remove_cvref_t<refl_t<T, I>>;
+
+				// if constexpr (std::same_as<val_t, hidden> || std::same_as<val_t, skip>)
+				// {
+				// 	return;
+				// }
+				// else
+				// {
+					static constexpr sv key = reflect<T>::keys[I];
+					write<erlterm::ERLANG>::op<Opts>(key, ctx, args...);
+
+					decltype(auto) member = [&]() -> decltype(auto)
+					{
+						if constexpr (reflectable<T>)
+						{
+							return get<I>(t);
+						}
+						else
+						{
+							return get<I>(reflect<T>::values);
+						}
+					}();
+
+					write<erlterm::ERLANG>::op<Opts>(get_member(value, member), ctx, args...);
+				// }
+			});
+	}
+};
 
 template <class T>
 struct to<erlterm::ERLANG, T> final

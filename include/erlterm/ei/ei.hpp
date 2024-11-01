@@ -162,16 +162,6 @@ GLZ_ALWAYS_INLINE void decode_number(T && value, Args &&... args)
 	}
 }
 
-template <class... Args>
-GLZ_ALWAYS_INLINE void decode_atom(auto && value, Args &&... args)
-{
-	using namespace std::placeholders;
-
-	value.resize(MAXATOMLEN);
-	detail::decode_impl(std::bind(ei_decode_atom, _1, _2, value.data()), std::forward<Args>(args)...);
-	value.shrink_to_fit();
-}
-
 template <class It0, class It1>
 GLZ_ALWAYS_INLINE void decode_token(auto && value, glz::is_context auto && ctx, It0 && it, It1 && end)
 {
@@ -186,16 +176,17 @@ GLZ_ALWAYS_INLINE void decode_token(auto && value, glz::is_context auto && ctx, 
 		return;
 	}
 
-	if (is_atom(type))
-	{
-		decode_atom(value, ctx, it, end);
-		return;
-	}
-
 	CHECK_OFFSET(sz);
 
 	value.resize(sz);
-	detail::decode_impl(std::bind(ei_decode_string, _1, _2, value.data()), ctx, it, end);
+	if (is_atom(type))
+	{
+		detail::decode_impl(std::bind(ei_decode_atom, _1, _2, value.data()), ctx, it, end);
+	}
+	else
+	{
+		detail::decode_impl(std::bind(ei_decode_string, _1, _2, value.data()), ctx, it, end);
+	}
 }
 
 template <class... Args>

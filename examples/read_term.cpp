@@ -78,6 +78,8 @@
 int main(int, char **)
 {
 	[[maybe_unused]] Term t;
+	[[maybe_unused]] MetaTerm mt;
+
 	[[maybe_unused]] int i;
 	[[maybe_unused]] double real;
 	[[maybe_unused]] std::string str;
@@ -102,10 +104,11 @@ int main(int, char **)
 	// x = erlterm::read_term(lstr, test_list_str);
 	// x = erlterm::read_term(tup6, test_tuple_int);
 	// x = erlterm::read_term(tup3, test_tuple);
-	x = erlterm::read_term(t, test_term);
+	// x = erlterm::read_term(t, test_term);
+	x = erlterm::read_term(mt, test_term);
 	// x = erlterm::read_term(i, test_int);
 	// x = erlterm::read_term(real, test_double);
-	// x = glz::read_json(t, test_json);
+	// x = glz::read_json(mt, test_json);
 	// std::vector<char> out;
 	// x = glz::write_beve(t, out);
 	// std::for_each(

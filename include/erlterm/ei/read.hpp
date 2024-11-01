@@ -207,7 +207,8 @@ struct from<erlterm::ERLANG, T> final
 	}
 };
 
-template <reflectable T>
+template <class T>
+requires glaze_object_t<T> || reflectable<T>
 struct from<erlterm::ERLANG, T> final
 {
 	template <auto Opts, is_context Ctx, class It0, class It1>

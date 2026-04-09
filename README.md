@@ -1,10 +1,13 @@
+### I've added EETF support to [glaze](https://github.com/stephenberry/glaze), so this lib no more maintained and archived
+
+
+
 # termlib
 Erlang binary term parser/builder
 
 Lightwieght library to parse Erlang binary representation of terms (after erlang:term_to_binary) and create binary to parse with erlang:binary_to_term.
 
 Not all Erlang types are supprted at this moment.
-
 
 # Roadmap
 1. Support all erlang types. And make some C++ equivalents
